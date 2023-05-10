@@ -1,7 +1,12 @@
 """
-Spyder Editor
+WP5 in OptimESM: an algorithm for the detection of tipping elements in CMIP6 model runs
 
-This is a temporary script file.
+Created by:
+Valerio Lembo (CNR-ISAC): v.lembo@isac.cnr.it
+
+Versions:
+10/5/23: And so it begins...
+
 """
 
 from cdo import Cdo
