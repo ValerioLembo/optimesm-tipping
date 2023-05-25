@@ -88,15 +88,21 @@ def tips(filein,filein_std,filein_pi,filein_pistd,varname,yrmxch):
     vardiff_timmax = var_timmax - varpi_timmax
     vardiff_std = var_std - varpi_std
     
-    var_ini_tm = np.nanmean(var_ini, 1)
-    var_end_tm = np.nanmean(var_end, 1)
+    var_ini_tm = np.nanmean(var_ini, 0)
+    var_end_tm = np.nanmean(var_end, 0)
     var_diff = np.squeeze(var_end_tm - var_ini_tm)
 
+    mask_std = np.where(np.abs(vardiff_std)<np.abs(np.mean(vardiff_std)),0,1)
+    mask_max = np.where(np.abs(vardiff_timmax)<np.abs(np.mean(vardiff_timmax)),0,1)
+    mask_diff = np.where(np.abs(var_diff)<np.abs(np.mean(var_diff)),0,1)
+
     indicators = [vardiff_std, vardiff_timmax, var_diff]
+    masks = [mask_std, mask_max, mask_diff]
+
     # print(np.shape(vardiff_timmax))
     # var1[1:dims[0]] = bn.move_mean(var1[1:dims[0]], window=gwindow,
     #                                   min_count=1)
-    return lon, lat, indicators
+    return lon, lat, indicators, masks
 
 
 bandwidth = 10
@@ -214,9 +220,13 @@ for mg in model_groups:
                                                             cdo.timstd(
                                                                 input = ofile_pirundet,
                                                                 output = ofile_pistd)
-                                                    [lon, lat, indicators] = tips(ofile_rundet, ofile_std, ofile_pirundet, ofile_pistd, vv, yrmaxchange)
+                                                    [lon, lat, indicators, masks] = tips(ofile_rundet, ofile_std, ofile_pirundet, ofile_pistd, vv, yrmaxchange)
                                                     map(path_l, lon, lat, indicators[0], vv, m, ss, 'std', 'Amon')
                                                     map(path_l, lon, lat, indicators[1], vv, m, ss, 'maxch', 'Amon')
+                                                    map(path_l, lon, lat, indicators[2], vv, m, ss, 'end vs. start', 'Amon')
+                                                    map(path_l, lon, lat, masks[0], vv, m, ss, 'mask (std)', 'Amon')
+                                                    map(path_l, lon, lat, masks[1], vv, m, ss, 'mask (maxch)', 'Amon')
+                                                    map(path_l, lon, lat, masks[2], vv, m, ss, 'mask (end vs. start)', 'Amon')
                                                     os.remove(ofile_pi)
                                                     os.remove(ofile_piy)
                                                     os.remove(ofile_pirundet)
