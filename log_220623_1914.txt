@@ -1,0 +1,63 @@
+MIP ScenarioMIP
+MODEL GROUP AS-RCEC
+MODEL TaiESM1
+In MODEL DIR ['ssp370', 'ssp585', 'ssp245', 'ssp126']
+SCENARIO ssp585
+RUN r1i1p1f1
+SImon
+[{'SImon': ['siconc']}, {'Amon': ['tas']}]
+VAR siconc
+GRID gn
+VERS v20211004
+Amon
+[{'SImon': ['siconc']}, {'Amon': ['tas']}]
+VAR tas
+GRID gn
+VERS v20200901
+Run r2i1p1f1 is not available
+MODEL GROUP AWI
+MODEL AWI-CM-1-1-MR
+In MODEL DIR ['ssp585', 'ssp370', 'ssp126', 'ssp245']
+SCENARIO ssp585
+RUN r1i1p1f1
+SImon
+No variable in SImon domain
+Amon
+[{'SImon': ['siconc']}, {'Amon': ['tas']}]
+VAR tas
+GRID gn
+VERS v20190529
+Run r2i1p1f1 is not available
+MODEL GROUP BCC
+MODEL BCC-CSM2-MR
+In MODEL DIR ['ssp370', 'ssp585', 'ssp245', 'ssp126']
+SCENARIO ssp585
+RUN r1i1p1f1
+SImon
+[{'SImon': ['siconc']}, {'Amon': ['tas']}]
+VAR siconc
+GRID gn
+VERS v20200219
+Amon
+[{'SImon': ['siconc']}, {'Amon': ['tas']}]
+VAR tas
+GRID gn
+VERS v20190314
+Run r2i1p1f1 is not available
+MODEL GROUP CAMS
+MODEL CAMS-CSM1-0
+In MODEL DIR ['ssp585', 'ssp370', 'ssp245', 'ssp126']
+SCENARIO ssp585
+RUN r1i1p1f1
+SImon
+[{'SImon': ['siconc']}, {'Amon': ['tas']}]
+VAR siconc
+GRID gn
+VERS v20190708
+Error in calling operator mergetime with:
+>>> /work/users/lembo/miniconda3/bin/cdo -O -s -mergetime /work_big/datasets/synda/data/CMIP6/ScenarioMIP/CAMS/CAMS-CSM1-0/ssp585/r1i1p1f1/SImon/siconc/gn/v20190708/file_merged_y.nc /work_big/datasets/synda/data/CMIP6/ScenarioMIP/CAMS/CAMS-CSM1-0/ssp585/r1i1p1f1/SImon/siconc/gn/v20190708/file_merged_std.nc /work_big/datasets/synda/data/CMIP6/ScenarioMIP/CAMS/CAMS-CSM1-0/ssp585/r1i1p1f1/SImon/siconc/gn/v20190708/siconc_SImon_CAMS-CSM1-0_ssp585_r1i1p1f1_gn_201501-209912.nc /work_big/datasets/synda/data/CMIP6/ScenarioMIP/CAMS/CAMS-CSM1-0/ssp585/r1i1p1f1/SImon/siconc/gn/v20190708/file_merged.nc<<<
+STDOUT:
+STDERR:Warning (cdf_set_dimtype): Could not assign all character coordinates to data variable!
+
+cdo    mergetime (Abort): Grid size of the input parameter siconc do not match!
+

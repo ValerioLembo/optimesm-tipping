@@ -1,0 +1,198 @@
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:MIP: ScenarioMIP
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:MODEL GROUP: AS-RCEC
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:MODEL: TaiESM1
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:In MODEL DIR: ['ssp370', 'ssp585', 'ssp245', 'ssp126']
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:SCENARIO: ssp585
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:RUN: r1i1p1f1
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:DOMAIN: SImon
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:[{'SImon': ['siconc']}, {'Amon': ['tas']}]
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:VAR: siconc
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:GRID: gn
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:VERS: v20211004
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:DOMAIN: Amon
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:[{'SImon': ['siconc']}, {'Amon': ['tas']}]
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:VAR: tas
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:GRID: gn
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:VERS: v20200901
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:Run r2i1p1f1 is not available
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:MODEL GROUP: AWI
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:MODEL: AWI-CM-1-1-MR
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:In MODEL DIR: ['ssp585', 'ssp370', 'ssp126', 'ssp245']
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:SCENARIO: ssp585
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:RUN: r1i1p1f1
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:DOMAIN: SImon
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:No variable in SImon domain
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:DOMAIN: Amon
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:[{'SImon': ['siconc']}, {'Amon': ['tas']}]
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:VAR: tas
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:GRID: gn
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:VERS: v20190529
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:Run r2i1p1f1 is not available
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:MODEL GROUP: BCC
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:MODEL: BCC-CSM2-MR
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:In MODEL DIR: ['ssp370', 'ssp585', 'ssp245', 'ssp126']
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:SCENARIO: ssp585
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:RUN: r1i1p1f1
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:DOMAIN: SImon
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:[{'SImon': ['siconc']}, {'Amon': ['tas']}]
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:VAR: siconc
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:GRID: gn
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:VERS: v20200219
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:DOMAIN: Amon
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:[{'SImon': ['siconc']}, {'Amon': ['tas']}]
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:VAR: tas
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:GRID: gn
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:VERS: v20190314
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:Run r2i1p1f1 is not available
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:MODEL GROUP: CAMS
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:MODEL: CAMS-CSM1-0
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:In MODEL DIR: ['ssp585', 'ssp370', 'ssp245', 'ssp126']
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:SCENARIO: ssp585
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:RUN: r1i1p1f1
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:DOMAIN: SImon
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:[{'SImon': ['siconc']}, {'Amon': ['tas']}]
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:VAR: siconc
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:GRID: gn
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:VERS: v20190708
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:DOMAIN: Amon
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:[{'SImon': ['siconc']}, {'Amon': ['tas']}]
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:VAR: tas
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:GRID: gn
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:VERS: v20190708
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:Run r2i1p1f1 is not available
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:MODEL GROUP: CAS
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:MODEL: FGOALS-g3
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:In MODEL DIR: ['ssp370', 'ssp585', 'ssp119', 'ssp245', 'ssp126']
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:SCENARIO: ssp585
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:RUN: r1i1p1f1
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:DOMAIN: SImon
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:[{'SImon': ['siconc']}, {'Amon': ['tas']}]
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:VAR: siconc
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:GRID: gn
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:VERS: v20191029
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:DOMAIN: Amon
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:[{'SImon': ['siconc']}, {'Amon': ['tas']}]
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:VAR: tas
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:GRID: gn
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:VERS: v20190818
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:Run r2i1p1f1 is not available
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:MODEL: FGOALS-f3-L
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:In MODEL DIR: ['ssp370', 'ssp585', 'ssp245', 'ssp126']
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:SCENARIO: ssp585
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:RUN: r1i1p1f1
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:DOMAIN: SImon
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:[{'SImon': ['siconc']}, {'Amon': ['tas']}]
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:VAR: siconc
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:GRID: gn
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:VERS: v20191031
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:DOMAIN: Amon
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:[{'SImon': ['siconc']}, {'Amon': ['tas']}]
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:VAR: tas
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:GRID: gr
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:VERS: v20191013
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:Run r2i1p1f1 is not available
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:MODEL: CAS-ESM2-0
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:In MODEL DIR: ['ssp370', 'ssp585', 'ssp245', 'ssp126']
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:SCENARIO: ssp585
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:RUN: r1i1p1f1
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:DOMAIN: SImon
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:[{'SImon': ['siconc']}, {'Amon': ['tas']}]
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:VAR: siconc
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:GRID: gn
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:VERS: v20201225
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:DOMAIN: Amon
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:[{'SImon': ['siconc']}, {'Amon': ['tas']}]
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:VAR: tas
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:tas variable is not available
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:Run r2i1p1f1 is not available
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:MODEL GROUP: CCCma
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:MODEL: CanESM5
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:In MODEL DIR: ['ssp585', 'ssp370', 'ssp245', 'ssp126', 'ssp119']
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:SCENARIO: ssp585
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:RUN: r1i1p1f1
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:DOMAIN: SImon
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:[{'SImon': ['siconc']}, {'Amon': ['tas']}]
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:VAR: siconc
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:GRID: gn
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:VERS: v20190429
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:DOMAIN: Amon
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:[{'SImon': ['siconc']}, {'Amon': ['tas']}]
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:VAR: tas
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:GRID: gn
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:VERS: v20190429
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:Run r2i1p1f1 is not available
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:MODEL: CanESM5-1
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:In MODEL DIR: ['ssp585', 'ssp370', 'ssp245', 'ssp126', 'ssp119']
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:SCENARIO: ssp585
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:RUN: r1i1p1f1
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:DOMAIN: SImon
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:[{'SImon': ['siconc']}, {'Amon': ['tas']}]
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:VAR: siconc
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:GRID: gn
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:VERS: v20190429
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:DOMAIN: Amon
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:[{'SImon': ['siconc']}, {'Amon': ['tas']}]
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:VAR: tas
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:GRID: gn
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:VERS: v20190429
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:Run r2i1p1f1 is not available
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:MODEL GROUP: CCCR-IITM
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:MODEL: IITM-ESM
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:In MODEL DIR: ['ssp370', 'ssp585', 'ssp245', 'ssp126']
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:SCENARIO: ssp585
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:RUN: r1i1p1f1
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:DOMAIN: SImon
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:No variable in SImon domain
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:DOMAIN: Amon
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:[{'SImon': ['siconc']}, {'Amon': ['tas']}]
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:VAR: tas
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:GRID: gn
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:VERS: v20200915
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:Run r2i1p1f1 is not available
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:MODEL GROUP: CMCC
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:MODEL: CMCC-ESM2
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:In MODEL DIR: ['ssp585', 'ssp370', 'ssp534-over', 'ssp126', 'ssp245']
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:SCENARIO: ssp585
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:RUN: r1i1p1f1
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:DOMAIN: SImon
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:[{'SImon': ['siconc']}, {'Amon': ['tas']}]
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:VAR: siconc
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:GRID: gn
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:VERS: v20210126
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:DOMAIN: Amon
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:[{'SImon': ['siconc']}, {'Amon': ['tas']}]
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:VAR: tas
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:GRID: gn
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:VERS: v20210126
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:Run r2i1p1f1 is not available
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:MODEL: CMCC-CM2-SR5
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:In MODEL DIR: ['ssp370', 'ssp585', 'ssp245', 'ssp126']
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:SCENARIO: ssp585
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:RUN: r1i1p1f1
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:DOMAIN: SImon
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:[{'SImon': ['siconc']}, {'Amon': ['tas']}]
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:VAR: siconc
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:GRID: gn
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:VERS: v20200622
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:DOMAIN: Amon
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:[{'SImon': ['siconc']}, {'Amon': ['tas']}]
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:VAR: tas
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:GRID: gn
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:VERS: v20200622
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:Run r2i1p1f1 is not available
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:MODEL GROUP: CSIRO
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:MODEL: ACCESS-ESM1-5
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:In MODEL DIR: ['ssp370', 'ssp585', 'ssp245', 'ssp126', 'ssp534-over']
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:SCENARIO: ssp585
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:RUN: r1i1p1f1
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:DOMAIN: SImon
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:[{'SImon': ['siconc']}, {'Amon': ['tas']}]
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:VAR: siconc
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:GRID: gn
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:VERS: v20210318
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:DOMAIN: Amon
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:[{'SImon': ['siconc']}, {'Amon': ['tas']}]
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:VAR: tas
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:GRID: gn
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:VERS: v20210318
+INFO:/home/lembo/tipping_optimesm/optimesm-tipping/hunt_CMIP6.py:VERS: v20191115
