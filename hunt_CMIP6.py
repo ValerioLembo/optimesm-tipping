@@ -8,6 +8,7 @@ Versions:
 10/5/23: And so it begins...
 08/09/2023: Solved most issues with clustering, now polishing the script...
 19/10/23: working version. Combines three masks: std, max jump, pc99
+21/10/23: Added test on symmetry with K-S
 """
 
 from cdo import Cdo
@@ -15,10 +16,10 @@ from math import floor
 Cdo.debug = True
 from netCDF4 import Dataset as ds
 import optim_esm_tools as oet
-import rpy_symmetry as rsym
+from scipy import stats
+# import rpy_symmetry as rsym
 import datetime
 import logging
-import warnings
 import os
 import shutil
 import glob
@@ -166,8 +167,20 @@ def tips(filein,filein_std,filein_pi,filein_pistd,varname,yrmxch):
     var_shiftdiff = var[yrmxch:,:,:]-var_shift[yrmxch:,:,:]
     var_diffabs = np.squeeze(np.abs(var_shiftdiff))
     var_timmax = np.nanmax(var_diffabs,0)
-    
-    # rsym.p_symmetry(values, test_statistic='BHI', **kw)
+   
+    oett = np.zeros(np.shape(var_timmax))
+    varn = np.where(var==0,np.nan,var)
+    for ln in np.arange(len(lon)-1):
+        for lt in np.arange(len(lat)-1):
+            vart = np.squeeze(varn[:,lt,ln])
+            maskn = np.where(~np.isnan(vart),1,0)
+            if np.all(maskn):
+                # oett[lt,ln] = stats.ks_1samp(vart, stats.norm.cdf(np.array(vart)))
+                [stat, p] = stats.kstest(vart-np.nanmean(vart), 'norm')
+                oett[lt,ln] = p
+                # oett[lt,ln] = stats.ks_1samp(vart, 'norm')
+                # oett[lt,ln] = rsym.p_symmetry(vart, test_statistic='KS')
+    # print(oett)
     
     varpi_shift = np.zeros(np.shape(varpi))
     varpi_shift[yrmxch:,:,:] = varpi[:finpi,:,:]
@@ -214,16 +227,22 @@ def tips(filein,filein_std,filein_pi,filein_pistd,varname,yrmxch):
         (var!=0.).astype(bool) &
         (~np.isnan(var))),
         1, 0)
-    mask_combine = np.where(
-        ((mask_std.astype(int) + 
-          mask_max.astype(int) + 
-          np.nansum(mask_99p[-30:,:,:].astype(int),axis=0)/30)==3).astype(bool),
-        1, 0)
-    indicators = [var_std, var_timmax]
     mask_99ps = np.where(
         ((np.nansum(mask_99p[-30:,:,:].astype(int),axis=0)/30)==1.).astype(bool),
         1, 0)
-    masks = [mask_std, mask_max, mask_99ps, mask_combine]
+    mask_pval = np.where(((oett>0.01).astype(bool) &
+                         (oett!=0.).astype(bool) &
+                         (~np.isnan(oett))),
+                         1, 0)
+    mask_combine = np.where(
+        ((mask_std.astype(int) + 
+          mask_max.astype(int) +
+          mask_pval.astype(int) + 
+          np.nansum(mask_99p[-30:,:,:].astype(int),axis=0)/30)>=3).astype(bool),
+        1, 0)
+    indicators = [var_std, var_timmax]
+    
+    masks = [mask_std, mask_max, mask_99ps, mask_combine, mask_pval]
     return time, lon, lat, var, indicators, masks
 
 
@@ -271,9 +290,11 @@ in_year = 1850
 end_year = 2100
 pc = [1, 5, 10, 25, 75, 90, 95, 99]
 thres_gp = 200
-project = ['ScenarioMIP']
+project = ['CMIP', 'ScenarioMIP']
 model_groups = [
-    'AS-RCEC', 'BCC', 'CAMS', 'CCCma', 'CCCR-IITM', 
+    'AS-RCEC', 'AWI',
+    'BCC',
+    'CAMS', 'CCCma', 'CCCR-IITM', 
     'CMCC', 
     'CSIRO', 
     'CSIRO-ARCCSS', 
@@ -299,7 +320,7 @@ vars = [
         {'Omon':['sos','tos']}]
 domains = ['SImon', 'Amon', 'Omon']
 scenarios = [
-    #{'CMIP':['historical', 'abrupt-4xCO2']},
+    {'CMIP':['historical']},
     {'ScenarioMIP': ['ssp585', 'ssp370', 'ssp245', 'ssp126']}]
 runs = ['r1i1p1f1', 'r2i1p1f1']
 in_year = 2015
@@ -333,11 +354,13 @@ for mip in project:
                         pass
                     scens = os.listdir(s_dir)
                     logger.info("In MODEL DIR: {}".format(scens))
-                    for i in np.arange(len(scenarios[mipp][mip])):
-                        if scenarios[mipp][mip][i] in scens:
-                            m_dir = os.path.join(s_dir, scenarios[mipp][mip][i])
+                    # for i in np.arange(len(scenarios[mipp][mip])):
+                    for ss in scenarios[mipp][mip]:
+                        # if scenarios[mipp][mip][i] in scens:
+                        if ss in scens:
+                            m_dir = os.path.join(s_dir, ss)
                             if os.path.isdir(m_dir) and os.listdir(m_dir):
-                                logger.info('SCENARIO: {}'.format(scenarios[mipp][mip][i]))
+                                logger.info('SCENARIO: {}'.format(ss))
                                 run = [r for r in os.listdir(m_dir)]    
                                 for rr in runs:
                                     if rr in run:
@@ -362,7 +385,7 @@ for mip in project:
                                                                 f_dir = os.path.join(ve_dir, vee)
                                                                 if os.path.isdir(f_dir) and os.listdir(f_dir):
                                                                     [ofile_y, ofile_std] = data_crunch(
-                                                                        f_dir, scenarios[mipp][mip][i], 
+                                                                        f_dir, ss, 
                                                                         vv, bandwidth, in_year, end_year)
                                                                     pimip_dir = os.path.join(path, 'CMIP')
                                                                     pimg_dir = os.path.join(pimip_dir, mg)
@@ -388,22 +411,25 @@ for mip in project:
                                                                                     latm = np.array(lat)
                                                                                     map(path_l, lon, lat, 
                                                                                         indicators[0], vv, vee, m, 
-                                                                                        scenarios[mipp][mip][i], 'std', dom)
+                                                                                        ss, 'std', dom)
                                                                                     map(path_l, lon, lat, 
                                                                                         indicators[1], vv, vee, m, 
-                                                                                        scenarios[mipp][mip][i], 'maxch', dom)
+                                                                                        ss, 'maxch', dom)
                                                                                     map(path_l, lon, lat, 
                                                                                         masks[0], vv, vee, m, 
-                                                                                        scenarios[mipp][mip][i], 'mask_std', dom)
+                                                                                        ss, 'mask_std', dom)
                                                                                     map(path_l, lon, lat, 
                                                                                         masks[1], vv, vee, m, 
-                                                                                        scenarios[mipp][mip][i], 'mask_maxch', dom)
+                                                                                        ss, 'mask_maxch', dom)
                                                                                     map(path_l, lon, lat, 
                                                                                         masks[2], vv, vee, m, 
-                                                                                        scenarios[mipp][mip][i], 'mask_pc99', dom)
+                                                                                        ss, 'mask_pc99', dom)
                                                                                     map(path_l, lon, lat,
                                                                                         masks[3], vv, vee, m, 
-                                                                                        scenarios[mipp][mip][i], 'mask_combine', dom)
+                                                                                        ss, 'mask_combine', dom)
+                                                                                    map(path_l, lon, lat,
+                                                                                        masks[4], vv, vee, m, 
+                                                                                        ss, 'mask_sym', dom)
                                                                                     clusters, masks_c = oet.analyze.clustering.build_cluster_mask(
                                                                                                     np.array(np.bool_(np.squeeze(masks[0]))),
                                                                                                     latm,
@@ -415,34 +441,34 @@ for mip in project:
                                                                                         clusters = np.array(clusters, dtype=int)
                                                                                         plotting_clusters(path_l, clusters, time,
                                                                                                     lon, lat, data, vv,
-                                                                                                    vee, m, 'std', scenarios[mipp][mip][i],
+                                                                                                    vee, m, 'std', ss,
                                                                                                     thres_gp, dom)
-                                                                                    clusters, masks_c = oet.analyze.clustering.build_cluster_mask(
-                                                                                                    np.array(np.bool_(np.squeeze(masks[1]))),
-                                                                                                    latm,
-                                                                                                    lonm,
-                                                                                                    max_distance_km='infer',
-                                                                                                    min_samples=8,
-                                                                                                    )
-                                                                                    if len(clusters) >= 1:
-                                                                                        clusters = np.array(clusters, dtype=int)
-                                                                                        plotting_clusters(path_l, clusters,
-                                                                                                    time, lon, lat, data, vv,
-                                                                                                    vee, m, 'maxch', scenarios[mipp][mip][i],
-                                                                                                    thres_gp, dom)
-                                                                                    clusters, masks_c = oet.analyze.clustering.build_cluster_mask(
-                                                                                                    np.array(np.bool_(np.squeeze(masks[2]))),
-                                                                                                    latm,
-                                                                                                    lonm,
-                                                                                                    max_distance_km='infer',
-                                                                                                    min_samples=8,
-                                                                                                    )
-                                                                                    if len(clusters) >= 1:
-                                                                                        clusters = np.array(clusters, dtype=int)
-                                                                                        plotting_clusters(path_l, clusters,
-                                                                                                    time, lon, lat, data, vv, 
-                                                                                                    vee, m, 'pc_99', scenarios[mipp][mip][i],
-                                                                                                    thres_gp, dom)
+                                                                                    # clusters, masks_c = oet.analyze.clustering.build_cluster_mask(
+                                                                                    #                 np.array(np.bool_(np.squeeze(masks[1]))),
+                                                                                    #                 latm,
+                                                                                    #                 lonm,
+                                                                                    #                 max_distance_km='infer',
+                                                                                    #                 min_samples=8,
+                                                                                    #                 )
+                                                                                    # if len(clusters) >= 1:
+                                                                                    #     clusters = np.array(clusters, dtype=int)
+                                                                                    #     plotting_clusters(path_l, clusters,
+                                                                                    #                 time, lon, lat, data, vv,
+                                                                                    #                 vee, m, 'maxch', ss,
+                                                                                    #                 thres_gp, dom)
+                                                                                    # clusters, masks_c = oet.analyze.clustering.build_cluster_mask(
+                                                                                    #                 np.array(np.bool_(np.squeeze(masks[2]))),
+                                                                                    #                 latm,
+                                                                                    #                 lonm,
+                                                                                    #                 max_distance_km='infer',
+                                                                                    #                 min_samples=8,
+                                                                                    #                 )
+                                                                                    # if len(clusters) >= 1:
+                                                                                    #     clusters = np.array(clusters, dtype=int)
+                                                                                    #     plotting_clusters(path_l, clusters,
+                                                                                    #                 time, lon, lat, data, vv, 
+                                                                                    #                 vee, m, 'pc_99', ss,
+                                                                                    #                 thres_gp, dom)
                                                                                     clusters, masks_c = oet.analyze.clustering.build_cluster_mask(
                                                                                                     np.array(np.bool_(np.squeeze(masks[3]))),
                                                                                                     latm,
@@ -454,7 +480,7 @@ for mip in project:
                                                                                         clusters = np.array(clusters, dtype=int)
                                                                                         plotting_clusters(path_l, clusters,
                                                                                                     time, lon, lat, data, vv,
-                                                                                                    vee, m, 'combine', scenarios[mipp][mip][i],
+                                                                                                    vee, m, 'combine', ss,
                                                                                                     thres_gp, dom)
                                                                                     os.remove(ofile_piy)
                                                                                     os.remove(ofile_pistd)
@@ -478,7 +504,7 @@ for mip in project:
                             else:
                                 logger.info("Theere's nothing in this scenario.")
                         else:
-                            logger.info("Experiment {} is not available".format(scenarios[mipp][mip][i]))
+                            logger.info("Experiment {} is not available".format(ss))
             else:
                 logger.info("No model is found in {} model group".format(mg))
     else:
