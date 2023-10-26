@@ -15,6 +15,7 @@ from cdo import Cdo
 from math import floor
 Cdo.debug = True
 from netCDF4 import Dataset as ds
+import diptest
 import optim_esm_tools as oet
 from scipy import stats
 # import rpy_symmetry as rsym
@@ -31,18 +32,24 @@ cdo = Cdo()
 now = datetime.datetime.now()
 date = now.isoformat()
 logfilen = 'log_hunt_{}.log'.format(date)
-logging.basicConfig(filename=logfilen, level=logging.INFO, flush=True)
+logging.basicConfig(filename=logfilen, level=logging.INFO)
 logger = logging.getLogger(__file__)
 logger.setLevel(logging.INFO)
 
 def data_crunch(f_dir,scen,var,filter,in_year,end_year):
     os.chdir(f_dir)
-    ofile = os.path.join(f_dir, 'file_merged.nc')
+    tmp_dir = '/tmp/tmp_{}_{}'.format(scen,date)
+    try:
+        os.makedirs(tmp_dir)
+    except OSError:
+        pass
+    ofile = os.path.join(tmp_dir, 'file_merged.nc')
     try:
         os.remove(ofile)
     except OSError:
         pass
     if len(os.listdir(f_dir))>1:
+        # logger.info(len(os.listdir(f_dir)))
         cdo.mergetime(
             input=glob.glob(f_dir+'/{}_*.nc'.format(var)),
             options = '-O',
@@ -50,7 +57,7 @@ def data_crunch(f_dir,scen,var,filter,in_year,end_year):
     else:
         ncfile = os.listdir(f_dir)
         shutil.copy(ncfile[0],ofile)
-    ofile_y = os.path.join(f_dir, 'file_merged_y.nc')
+    ofile_y = os.path.join(tmp_dir, 'file_merged_y.nc')
     try:
         os.remove(ofile_y)
     except OSError:
@@ -64,20 +71,22 @@ def data_crunch(f_dir,scen,var,filter,in_year,end_year):
         else:
             cdo.runmean(filter,
                 input= '-selyear,{}/{} -remapbil,r360x180 -yearmean {}'.format(in_year,end_year,ofile),
-                options = '--pedantic -v -P 8',
+                options = '-P 8',
                 output = ofile_y)
     else:
         if var=='siconc' or var=='sos' or var=='tos':
+            # logger.info("Entering CDO manipulations...")
             cdo.setmisstoc(0,
                 input = '-runmean,{} -selvar,{} -remapbil,r360x180 -yearmean {}'.format(filter,var,ofile),
                 options = '-P 8',
                 output = ofile_y)
         else:
+            # logger.info("Entering CDO manipulations...")
             cdo.runmean(filter,
                 input= '-remapbil,r360x180 -yearmean {}'.format(ofile),
                 options = '-P 8',
                 output = ofile_y)
-    ofile_std = os.path.join(f_dir, 'file_merged_std.nc')
+    ofile_std = os.path.join(tmp_dir, 'file_merged_std.nc')
     try:
         os.remove(ofile_std)
     except OSError:
@@ -102,28 +111,6 @@ def julian_date_to_decimal_years(jd):
         decimal_years.append(decimal_year)
     decimal_years = np.array(decimal_years)
     return decimal_years
-
-
-def map(path, lons, lats, data, var, ver, model, scen, mode, rea):
-    m = Basemap(projection='cyl', resolution='c', lon_0=180.)
-    lons[lons > 180.] -= 360.
-    lons_2 = lons[lons>=0]
-    lons_3 = np.append(lons[lons<0], lons_2, 0)
-    lons = lons_3 + 180.
-    # draw map features
-    m.drawcoastlines()
-    m.drawcountries()
-    m.fillcontinents(color='coral', lake_color='aqua')
-    # plot data on the map
-    vmax = np.nanmax(np.abs(data))
-    vmin = 0.
-    m.pcolormesh(lons, lats, np.squeeze(data), cmap='Reds', vmin = vmin, vmax = vmax)
-    # add title
-    plt.title(var + " " + model + " " + ver + " " + scen + "\n " + mode + " " + rea)
-    plt.colorbar()
-    # show and save the map
-    plt.savefig(path + "/" + model + "/" + var + "_" + model + "_" + ver + "_" + scen + "_" + rea + "_" + mode + "_diff.png")
-    plt.close()
 
 
 def reg_boxsel(lon, lat, data, lomin, lomax, lamin, lamax):
@@ -169,19 +156,18 @@ def tips(filein,filein_std,filein_pi,filein_pistd,varname,yrmxch):
     var_timmax = np.nanmax(var_diffabs,0)
    
     oett = np.zeros(np.shape(var_timmax))
+    oetd = np.zeros(np.shape(var_timmax))
     varn = np.where(var==0,np.nan,var)
     for ln in np.arange(len(lon)-1):
         for lt in np.arange(len(lat)-1):
             vart = np.squeeze(varn[:,lt,ln])
             maskn = np.where(~np.isnan(vart),1,0)
             if np.all(maskn):
-                # oett[lt,ln] = stats.ks_1samp(vart, stats.norm.cdf(np.array(vart)))
-                [stat, p] = stats.kstest(vart-np.nanmean(vart), 'norm')
-                oett[lt,ln] = p
-                # oett[lt,ln] = stats.ks_1samp(vart, 'norm')
-                # oett[lt,ln] = rsym.p_symmetry(vart, test_statistic='KS')
-    # print(oett)
-    
+                [dipt,pd] = diptest.diptest(vart)
+                [stat, ps] = stats.kstest(vart-np.nanmean(vart), 'norm')
+                oett[lt,ln] = ps
+                oetd[lt,ln] =pd
+                # oett[lt,ln] = rsym.p_symmetry(vart, test_statistic='KS')    
     varpi_shift = np.zeros(np.shape(varpi))
     varpi_shift[yrmxch:,:,:] = varpi[:finpi,:,:]
     varpi_shiftdiff = varpi[yrmxch:,:,:]-varpi_shift[yrmxch:,:,:]
@@ -203,24 +189,24 @@ def tips(filein,filein_std,filein_pi,filein_pistd,varname,yrmxch):
         ((np.abs(varpi_timmax)!=0.).astype(bool)) &
         (~np.isnan(varpi_timmax))), 
         1, 0)
-    mask_75p = np.where(
-        ((var>pcm[4,:,:]).astype(bool) |
-         (var<pcm[0,:,:]).astype(bool) &
-        (var!=0.).astype(bool) &
-        (~np.isnan(var))),
-        1, 0)
-    mask_90p = np.where(
-        ((var>pcm[5,:,:]).astype(bool) |
-        (var<pcm[1,:,:]).astype(bool) &
-        (var!=0.).astype(bool) &
-        (~np.isnan(var))),
-        1, 0)
-    mask_95p = np.where(
-        ((var>pcm[6,:,:]).astype(bool) |
-        (var<pcm[2,:,:]).astype(bool) &
-        (var!=0.).astype(bool) &
-        (~np.isnan(var))),
-        1, 0)
+    # mask_75p = np.where(
+    #     ((var>pcm[4,:,:]).astype(bool) |
+    #      (var<pcm[0,:,:]).astype(bool) &
+    #     (var!=0.).astype(bool) &
+    #     (~np.isnan(var))),
+    #     1, 0)
+    # mask_90p = np.where(
+    #     ((var>pcm[5,:,:]).astype(bool) |
+    #     (var<pcm[1,:,:]).astype(bool) &
+    #     (var!=0.).astype(bool) &
+    #     (~np.isnan(var))),
+    #     1, 0)
+    # mask_95p = np.where(
+    #     ((var>pcm[6,:,:]).astype(bool) |
+    #     (var<pcm[2,:,:]).astype(bool) &
+    #     (var!=0.).astype(bool) &
+    #     (~np.isnan(var))),
+    #     1, 0)
     mask_99p = np.where(
         ((var>pcm[7,:,:]).astype(bool) |
         (var<pcm[3,:,:]).astype(bool) &
@@ -230,23 +216,27 @@ def tips(filein,filein_std,filein_pi,filein_pistd,varname,yrmxch):
     mask_99ps = np.where(
         ((np.nansum(mask_99p[-30:,:,:].astype(int),axis=0)/30)==1.).astype(bool),
         1, 0)
-    mask_pval = np.where(((oett>0.01).astype(bool) &
+    mask_ps = np.where(((oett>(pc[2]/100)).astype(bool) &
                          (oett!=0.).astype(bool) &
                          (~np.isnan(oett))),
+                         1, 0)
+    mask_pd = np.where(((oetd<(pc[2]/100)).astype(bool) &
+                         (oetd!=0.).astype(bool) &
+                         (~np.isnan(oetd))),
                          1, 0)
     mask_combine = np.where(
         ((mask_std.astype(int) + 
           mask_max.astype(int) +
-          mask_pval.astype(int) + 
+          mask_ps.astype(int) +
           np.nansum(mask_99p[-30:,:,:].astype(int),axis=0)/30)>=3).astype(bool),
         1, 0)
-    indicators = [var_std, var_timmax]
-    
-    masks = [mask_std, mask_max, mask_99ps, mask_combine, mask_pval]
+    indicators = [var_std, var_timmax, oett, oetd]
+    masks = [mask_std, mask_max, mask_99ps, mask_combine, mask_ps, mask_pd]
     return time, lon, lat, var, indicators, masks
 
 
-def plotting_clusters(path, clusters, time, lon, lat, data, vv, vee, mod, method, scen, thres, dom):
+def plotting_clusters(path, clusters, time, lon, lat, data, ind, 
+                      vv, vee, mod, method, scen, thres):
     for cl in range(len(clusters[:,0,0])):
         cl_tser = clusters[cl,:,:]
         if np.nansum(cl_tser)>thres:
@@ -254,32 +244,97 @@ def plotting_clusters(path, clusters, time, lon, lat, data, vv, vee, mod, method
                                                                                                      np.size(clusters,axis=0), 
                                                                                                      method))
             fld = cl_tser[np.newaxis,:,:] * data
-            if method == 'std':
-                fld_n = np.where(fld==0,np.nan,fld)
-                tser = np.nanstd(np.nanstd(fld_n,axis=2),axis=1)
-            else:
-                crate = np.nansum(np.nansum(cl_tser,axis=0))/(len(lon)*len(lat))
-                tser = np.nanmean(np.nanmean(fld,axis=2),axis=1)/crate
-            plot_tser(path, time, tser, vv, vee, mod, scen, 'cluster_{}_{}'.format(method, cl), dom)
-            map(path, lon, lat, 
-                np.squeeze(clusters[cl,:,:]), 
-                vv, vee, m, scen, 'clusters_{}_{}'.format(method, cl), dom)
+            std = cl_tser * ind[0]
+            std_m = np.nanmean(np.where(std==0,np.nan,std))
+            mjump = cl_tser * ind[1]
+            mjump_m = np.nanmean(np.where(mjump==0,np.nan,mjump)) 
+            # dipt = cl_tser * ind[3]
+            fld_n = np.where(fld==0,np.nan,fld)
+            tstd = np.nanstd(np.nanstd(fld_n,axis=2),axis=1)
+            crate = np.nansum(np.nansum(cl_tser,axis=0))/(len(lon)*len(lat))
+            tser = np.nanmean(np.nanmean(fld,axis=2),axis=1)/crate
+            [dipt,pd] = diptest.diptest(tser) 
+            [stat, ps] = stats.kstest(tser-np.nanmean(tser), 'norm')
+            plt.figure(figsize=(12, 6))  # Set the figure size
+            ax1 = plt.subplot(2,2,1)
+            map_inlet(ax1, lon, lat, np.squeeze(clusters[cl,:,:]))
+            ax2 = plt.subplot(2,2,2)
+            plot_tser_inlet(time, tser, vv)
+            ax3 = plt.subplot(2,2,3)
+            plot_tser_inlet(time, tstd, 'std')
+            ax4 = plt.subplot(2,2,4)
+            tab = plt.table(cellText = [[str(std_m), str(mjump_m),
+                                        str(pd), str(ps)]],
+                            colLabels = ['St. dev.','Max. Jump',
+                                         'Dip pval', 'KS pval'],
+                            loc='center')
+            plt.axis('off')
+            plt.suptitle(vv + " " + mod + " " + vee + " " + scen + " " + method)
+            plt.savefig(path + "/" + mod + "/" + vv + "_" + mod + "_" + vee + "_" + scen + "_cl_" + method + "_" + str(cl) + ".png")
+            plt.close()
         else:
             pass
 
                                                                                 
-def plot_tser(path, time, var, vname, ver, model, scen, name, rea):
+def plot_tser(path, time, var, vname, ver, model, scen, name):
     # Plotting
     yrs = julian_date_to_decimal_years(time)
     plt.figure(figsize=(10, 6))  # Set the figure size
     plt.plot(yrs, var, color='blue', linewidth=1)
-    plt.title(vname + " " + model + " " + ver + " " + scen + "\n" + rea)
+    plt.title(vname + " " + model + " " + ver + " " + scen)
     plt.xlabel('Years')  # Set the x-axis label
     plt.ylabel(vname)  # Set the y-axis label
     plt.grid(True)  # Enable gridlines
     plt.tight_layout()  # Adjust the spacing of the plot
-    plt.savefig(path + "/" + model + "/" + vname + "_" + model + "_" + ver + "_" + scen + "_" + rea + "_" + name + "_tser.png")
+    plt.savefig(path + "/" + model + "/" + vname + "_" + model + "_" + ver + "_" + scen + "_" + name + "_tser.png")
     plt.close()
+    
+def plot_tser_inlet(time, var, vname):
+    # Plotting
+    yrs = julian_date_to_decimal_years(time)
+    # plt.figure(figsize=(10, 6))  # Set the figure size
+    plt.plot(yrs, var, color='blue', linewidth=1)
+    plt.xlabel('Years')  # Set the x-axis label
+    plt.ylabel(vname)  # Set the y-axis label
+    plt.grid(True)  # Enable gridlines
+    plt.tight_layout()  # Adjust the spacing of the plot
+
+def map(path, lons, lats, data, var, ver, model, scen, mode):
+    m = Basemap(projection='cyl', resolution='c', lon_0=180.)
+    lons[lons > 180.] -= 360.
+    lons_2 = lons[lons>=0]
+    lons_3 = np.append(lons[lons<0], lons_2, 0)
+    lons = lons_3 + 180.
+    # draw map features
+    m.drawcoastlines()
+    m.drawcountries()
+    m.fillcontinents(color='coral', lake_color='aqua')
+    # plot data on the map
+    vmax = np.nanmax(np.abs(data))
+    vmin = 0.
+    m.pcolormesh(lons, lats, np.squeeze(data), cmap='Reds', vmin = vmin, vmax = vmax)
+    # add title
+    plt.title(var + " " + model + " " + ver + " " + scen + "\n " + mode)
+    plt.colorbar()
+    # show and save the map
+    plt.savefig(path + "/" + model + "/" + var + "_" + model + "_" + ver + "_" + scen + "_" + mode + ".png")
+    plt.close()
+    
+def map_inlet(ax, lons, lats, data):
+    m = Basemap(projection='cyl', resolution='c', lon_0=180., ax=ax)
+    lons[lons > 180.] -= 360.
+    lons_2 = lons[lons>=0]
+    lons_3 = np.append(lons[lons<0], lons_2, 0)
+    lons = lons_3 + 180.
+    # draw map features
+    m.drawcoastlines()
+    m.drawcountries()
+    m.fillcontinents(color='coral', lake_color='aqua')
+    # plot data on the map
+    vmax = np.nanmax(np.abs(data))
+    vmin = 0.
+    m.pcolormesh(lons, lats, np.squeeze(data), cmap='Reds', vmin = vmin, vmax = vmax)
+    # plt.colorbar(cax=ax)
 
 
 bandwidth = 10
@@ -292,9 +347,10 @@ pc = [1, 5, 10, 25, 75, 90, 95, 99]
 thres_gp = 200
 project = ['CMIP', 'ScenarioMIP']
 model_groups = [
-    'AS-RCEC', 'AWI',
+    # 'AS-RCEC', 'AWI',
     'BCC',
-    'CAMS', 'CCCma', 'CCCR-IITM', 
+    'CAMS',
+    'CCCma', 'CCCR-IITM', 
     'CMCC', 
     'CSIRO', 
     'CSIRO-ARCCSS', 
@@ -320,12 +376,12 @@ vars = [
         {'Omon':['sos','tos']}]
 domains = ['SImon', 'Amon', 'Omon']
 scenarios = [
-    {'CMIP':['historical']},
+    {'CMIP':[]},
     {'ScenarioMIP': ['ssp585', 'ssp370', 'ssp245', 'ssp126']}]
 runs = ['r1i1p1f1', 'r2i1p1f1']
 in_year = 2015
 end_year = 2100
-path = '/work_big/datasets/synda/data/CMIP6/'
+path = '/home/lembo/work_big/datasets/synda/data/CMIP6/'
 path_l = '/home/lembo/tipping_optimesm/figures_{}'.format(date)
 try:
     os.makedirs(path_l)
@@ -390,6 +446,7 @@ for mip in project:
                                                                     pimip_dir = os.path.join(path, 'CMIP')
                                                                     pimg_dir = os.path.join(pimip_dir, mg)
                                                                     if 'piControl' in os.listdir(os.path.join(pimg_dir, m)):
+                                                                        # logger.info("The piControl is present...")
                                                                         pi_dir = os.path.join(pimg_dir, m, 'piControl', rr, dom, vv, gg)
                                                                         if os.path.isdir(pi_dir) and os.listdir(pi_dir): 
                                                                             if dom in os.listdir(os.path.join(pimg_dir, m, 'piControl', rr)):
@@ -411,38 +468,46 @@ for mip in project:
                                                                                     latm = np.array(lat)
                                                                                     map(path_l, lon, lat, 
                                                                                         indicators[0], vv, vee, m, 
-                                                                                        ss, 'std', dom)
+                                                                                        ss, 'std')
                                                                                     map(path_l, lon, lat, 
                                                                                         indicators[1], vv, vee, m, 
-                                                                                        ss, 'maxch', dom)
+                                                                                        ss, 'maxch')
+                                                                                    map(path_l, lon, lat, 
+                                                                                        indicators[2], vv, vee, m, 
+                                                                                        ss, 'sym')
+                                                                                    map(path_l, lon, lat, 
+                                                                                        indicators[1], vv, vee, m, 
+                                                                                        ss, 'mmod')
                                                                                     map(path_l, lon, lat, 
                                                                                         masks[0], vv, vee, m, 
-                                                                                        ss, 'mask_std', dom)
+                                                                                        ss, 'mask_std')
                                                                                     map(path_l, lon, lat, 
                                                                                         masks[1], vv, vee, m, 
-                                                                                        ss, 'mask_maxch', dom)
+                                                                                        ss, 'mask_maxch')
                                                                                     map(path_l, lon, lat, 
                                                                                         masks[2], vv, vee, m, 
-                                                                                        ss, 'mask_pc99', dom)
+                                                                                        ss, 'mask_pc99')
                                                                                     map(path_l, lon, lat,
                                                                                         masks[3], vv, vee, m, 
-                                                                                        ss, 'mask_combine', dom)
+                                                                                        ss, 'mask_combine')
                                                                                     map(path_l, lon, lat,
                                                                                         masks[4], vv, vee, m, 
-                                                                                        ss, 'mask_sym', dom)
+                                                                                        ss, 'mask_sym')
+                                                                                    map(path_l, lon, lat,
+                                                                                        masks[5], vv, vee, m, 
+                                                                                        ss, 'mask_mmod')
                                                                                     clusters, masks_c = oet.analyze.clustering.build_cluster_mask(
                                                                                                     np.array(np.bool_(np.squeeze(masks[0]))),
                                                                                                     latm,
                                                                                                     lonm,
                                                                                                     max_distance_km='infer',
-                                                                                                    min_samples=8,
-                                                                                                    )   
+                                                                                                    min_samples=8)
                                                                                     if len(clusters) >= 1:
                                                                                         clusters = np.array(clusters, dtype=int)
                                                                                         plotting_clusters(path_l, clusters, time,
-                                                                                                    lon, lat, data, vv,
-                                                                                                    vee, m, 'std', ss,
-                                                                                                    thres_gp, dom)
+                                                                                                    lon, lat, data, indicators, 
+                                                                                                    vv, vee, m, 'std', ss,
+                                                                                                    thres_gp)
                                                                                     # clusters, masks_c = oet.analyze.clustering.build_cluster_mask(
                                                                                     #                 np.array(np.bool_(np.squeeze(masks[1]))),
                                                                                     #                 latm,
@@ -474,14 +539,13 @@ for mip in project:
                                                                                                     latm,
                                                                                                     lonm,
                                                                                                     max_distance_km='infer',
-                                                                                                    min_samples=8,
-                                                                                                    )
+                                                                                                    min_samples=8)
                                                                                     if len(clusters) >= 1:
                                                                                         clusters = np.array(clusters, dtype=int)
                                                                                         plotting_clusters(path_l, clusters,
-                                                                                                    time, lon, lat, data, vv,
-                                                                                                    vee, m, 'combine', ss,
-                                                                                                    thres_gp, dom)
+                                                                                                    time, lon, lat, data, indicators,
+                                                                                                    vv, vee, m, 'combine', ss,
+                                                                                                    thres_gp)
                                                                                     os.remove(ofile_piy)
                                                                                     os.remove(ofile_pistd)
                                                                                 else:
