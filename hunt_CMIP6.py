@@ -12,6 +12,7 @@ Versions:
 16/11/23: Reorganized the header 
 24/01/24: Printing out the time series to Netcdf
 25/01/24: Appending historical time series to ssp scenarios
+18/03/24: Now saves time series as raw yearly time series
 """
 
 from cdo import Cdo
@@ -50,7 +51,7 @@ in_year = 2010          # Initial year for historical/ssp simulations
 end_year = 2300         # Last year for ssp simulations
 pc = [1, 5, 10, 25,     # set of percentiles for tail comparisons
       75, 90, 95, 99]
-thres_gp = 150          # Minimal area (in gridpoints 1x1) for cluster retrieval
+thres_gp = 100          # Minimal area (in gridpoints 1x1) for cluster retrieval
 
 # Defining input/output paths, scenarios, variables and models to be analysed
 path = '/work_big/datasets/synda/data/CMIP6/'
@@ -74,7 +75,8 @@ model_groups = [
     # 'CSIRO', 
     # 'CSIRO-ARCCSS', 
     # 'E3SM-Project', 
-    # 'EC-Earth-Consortium', 'FIO-QLNM',
+    # 'EC-Earth-Consortium', 
+    # 'FIO-QLNM',
     # 'HAMMOZ-Consortium', 
     # 'INM', 
     # 'IPSL', 
@@ -83,8 +85,9 @@ model_groups = [
     # 'MRI',
     # 'NASA-GISS', 
     # 'NCAR', 
-    # 'NCC', 'NIMS-KMA',
-    # 'NOAA-GFDL', 
+    # 'NCC', 
+    # 'NIMS-KMA',
+    'NOAA-GFDL', 
     'NUIST', 
     'SNU',
     'THU'
@@ -118,6 +121,11 @@ def data_crunch(f_dir,scen,var,filter,in_year,end_year):
     else:
         ncfile = os.listdir(f_dir)
         shutil.copy(ncfile[0],ofile)
+    ofile_my = os.path.join(tmp_dir, 'file_merged_my.nc')
+    try:
+        os.remove(ofile_my)
+    except OSError:
+        pass
     ofile_y = os.path.join(tmp_dir, 'file_merged_y.nc')
     try:
         os.remove(ofile_y)
@@ -136,10 +144,18 @@ def data_crunch(f_dir,scen,var,filter,in_year,end_year):
             cdo.setmisstoc(0,
                 input= '-selyear,{}/{} -runmean,{} -selvar,{} -remapbil,r360x180 -yearmean {}'.format(in_year,end_year,filter,var,ofile),
                 options = '-P 8',
+                output = ofile_my)
+            cdo.setmisstoc(0,
+                input= '-selyear,{}/{} -selvar,{} -remapbil,r360x180 -yearmean {}'.format(in_year,end_year,var,ofile),
+                options = '-P 8',
                 output = ofile_y)
         else:
             cdo.runmean(filter,
                 input= '-selyear,{}/{} -remapbil,r360x180 -yearmean {}'.format(in_year,end_year,ofile),
+                options = '-P 8',
+                output = ofile_my)
+            cdo.remapbil('r360x180',
+                input= '-selyear,{}/{} -yearmean {}'.format(in_year,end_year,ofile),
                 options = '-P 8',
                 output = ofile_y)
     else:
@@ -148,11 +164,19 @@ def data_crunch(f_dir,scen,var,filter,in_year,end_year):
             cdo.setmisstoc(0,
                 input = '-runmean,{} -selvar,{} -remapbil,r360x180 -yearmean {}'.format(filter,var,ofile),
                 options = '-P 8',
+                output = ofile_my)
+            cdo.setmisstoc(0,
+                input = '-selvar,{} -remapbil,r360x180 -yearmean {}'.format(var,ofile),
+                options = '-P 8',
                 output = ofile_y)
         else:
             # logger.info("Entering CDO manipulations...")
             cdo.runmean(filter,
                 input= '-remapbil,r360x180 -yearmean {}'.format(ofile),
+                options = '-P 8',
+                output = ofile_my)
+            cdo.remapbil('r360x180',
+                input= '-yearmean {}'.format(ofile),
                 options = '-P 8',
                 output = ofile_y)
     ofile_std = os.path.join(tmp_dir, 'file_merged_std.nc')
@@ -161,13 +185,13 @@ def data_crunch(f_dir,scen,var,filter,in_year,end_year):
     except OSError:
         pass                                                    
     cdo.timstd(
-        input = '-detrend {}'.format(ofile_y),
+        input = '-detrend {}'.format(ofile_my),
         output = ofile_std)
     try:
         os.remove(ofile)
     except OSError:
         pass    
-    return ofile_y, ofile_std
+    return ofile_y, ofile_my, ofile_std
 
 
 def julian_date_to_decimal_years(jd):
@@ -254,12 +278,12 @@ def tips(filein,filein_std,filein_pi,filein_pistd,varname,yrmxch):
     pcm = np.percentile(varpi, pc, axis=0)
     
     mask_std = np.where(
-        ((np.abs(var_std)>pcm_std[6]).astype(bool) &
+        ((np.abs(var_std)>pcm_std[7]).astype(bool) &
         ((np.abs(varpi_std)!=0.).astype(bool)) &
         (~np.isnan(varpi_std))), 
         1, 0)
     mask_max = np.where(
-        ((np.abs(var_timmax)>pcm_jump[6]).astype(bool) & 
+        ((np.abs(var_timmax)>pcm_jump[7]).astype(bool) & 
         ((np.abs(varpi_timmax)!=0.).astype(bool)) &
         (~np.isnan(varpi_timmax))), 
         1, 0)
@@ -309,7 +333,7 @@ def tips(filein,filein_std,filein_pi,filein_pistd,varname,yrmxch):
     return time, lon, lat, unit, var, indicators, masks
 
 
-def plotting_clusters(path, file_in, file_pin, file_hin, clusters, time, lon, lat, unit, data, ind, 
+def plotting_clusters(path, file_in, file_pin, file_hin, file_min, file_mpin, file_mhin, clusters, time, lon, lat, unit, data, ind, 
                       vv, vee, mod, method, scen, thres):
     for cl in range(len(clusters[:,0,0])):
         cl_tser = clusters[cl,:,:]
@@ -319,18 +343,19 @@ def plotting_clusters(path, file_in, file_pin, file_hin, clusters, time, lon, la
                                                                                                      method))
             crate = np.nansum(np.nansum(cl_tser,axis=0))/(len(lon)*len(lat))
             
-            data = ds(file_in)
+            data = ds(file_min)
             var = data.variables[vv]
             fld = cl_tser[np.newaxis,:,:] * var
             tser = np.nanmean(np.nanmean(fld,axis=2),axis=1)/crate
-            data = ds(file_pin)
-            var = data.variables[vv]
-            fld_pi = cl_tser[np.newaxis,:,:] * var
-            tser_pi = np.nanmean(np.nanmean(fld_pi,axis=2),axis=1)/crate
-            data = ds(file_hin)
+            data = ds(file_mhin)
             var = data.variables[vv]
             fld_hi = cl_tser[np.newaxis,:,:] * var
             tser_hi = np.nanmean(np.nanmean(fld_hi,axis=2),axis=1)/crate
+            yrs = julian_date_to_decimal_years(time)
+            tser_all = np.append(tser_hi, tser)
+            time_all = np.linspace(1850, 1850+len(tser_all), len(tser_all))
+            yrs_all = time_all.astype(int)
+            # yrs_all = julian_date_to_decimal_years(time_all)
             
             std = cl_tser * ind[0]
             std_m = np.nanmean(np.where(std==0,np.nan,std))
@@ -340,16 +365,15 @@ def plotting_clusters(path, file_in, file_pin, file_hin, clusters, time, lon, la
             fld_n = np.where(fld==0,np.nan,fld)
             tstd = np.nanstd(np.nanstd(fld_n,axis=2),axis=1)
             
-            
             [dipt,pd] = diptest.diptest(tser) 
             [stat, ps] = stats.kstest(tser-np.nanmean(tser), 'norm')
-            plt.figure(figsize=(12, 6))  # Set the figure size
+            plt.figure(figsize=(12, 8))  # Set the figure size
             ax1 = plt.subplot(2,2,1)
             map_inlet(ax1, lon, lat, np.squeeze(clusters[cl,:,:]))
             ax2 = plt.subplot(2,2,2)
-            plot_tser_inlet(time, tser, vv)
+            plot_tser_inlet(yrs_all, tser_all, vv)
             ax3 = plt.subplot(2,2,3)
-            plot_tser_inlet(time, tstd, 'std')
+            plot_tser_inlet(yrs, tstd, 'std')
             ax4 = plt.subplot(2,2,4)
             tab = plt.table(cellText = [['St. dev.','Max. Jump'],
                                         [str(std_m), str(mjump_m)],
@@ -363,6 +387,19 @@ def plotting_clusters(path, file_in, file_pin, file_hin, clusters, time, lon, la
             plt.savefig(file_f)
             plt.close()
             
+            data = ds(file_in)
+            var = data.variables[vv]
+            fld = cl_tser[np.newaxis,:,:] * var
+            tser = np.nanmean(np.nanmean(fld,axis=2),axis=1)/crate
+            data = ds(file_pin)
+            var = data.variables[vv]
+            fld_pi = cl_tser[np.newaxis,:,:] * var
+            tser_pi = np.nanmean(np.nanmean(fld_pi,axis=2),axis=1)/crate
+            data = ds(file_hin)
+            var = data.variables[vv]
+            fld_hi = cl_tser[np.newaxis,:,:] * var
+            tser_hi = np.nanmean(np.nanmean(fld_hi,axis=2),axis=1)/crate
+             
             file = path + '/ssp.nc'
             pr_output(tser, vv, method, file_in, file, unit)
             file_hi = path + '/hist.nc'
@@ -471,13 +508,12 @@ def plot_tser(path, time, var, vname, ver, model, scen, name):
     
 def plot_tser_inlet(time, var, vname):
     # Plotting
-    yrs = julian_date_to_decimal_years(time)
     # plt.figure(figsize=(10, 6))  # Set the figure size
-    plt.plot(yrs, var, color='blue', linewidth=1)
+    plt.plot(time, var, color='blue', linewidth=1)
     plt.xlabel('Years')  # Set the x-axis label
     plt.ylabel(vname)  # Set the y-axis label
     plt.grid(True)  # Enable gridlines
-    plt.tight_layout()  # Adjust the spacing of the plot
+    # plt.tight_layout()  # Adjust the spacing of the plot
 
 def map(path, lons, lats, data, var, ver, model, scen, mode):
     m = Basemap(projection='cyl', resolution='c', lon_0=180.)
@@ -569,7 +605,7 @@ for mip in project:
                                                                 f_dir = os.path.join(ve_dir, vee)
                                                                 if os.path.isdir(f_dir) and os.listdir(f_dir):
                                                                     try:
-                                                                        [ofile_y, ofile_std] = data_crunch(
+                                                                        [ofile_y, ofile_my, ofile_std] = data_crunch(
                                                                             f_dir, ss, 
                                                                             vv, bandwidth, in_year, end_year)
                                                                     except TypeError:
@@ -592,7 +628,7 @@ for mip in project:
                                                                                 fhi_dir = os.path.join(hiv_dir, veh)
                                                                                 if os.path.isdir(fpi_dir) and os.listdir(fpi_dir):
                                                                                     try:
-                                                                                        [ofile_piy, ofile_pistd] = data_crunch(
+                                                                                        [ofile_piy, ofile_pimy, ofile_pistd] = data_crunch(
                                                                                             fpi_dir, 'piControl', vv, 
                                                                                             bandwidth, in_year, end_year)
                                                                                     except TypeError:
@@ -601,14 +637,14 @@ for mip in project:
                                                                                     try:
                                                                                         [time, lon, 
                                                                                         lat, unit, data, 
-                                                                                        indicators, masks] = tips(ofile_y, ofile_std, 
-                                                                                                                   ofile_piy, ofile_pistd, 
+                                                                                        indicators, masks] = tips(ofile_my, ofile_std, 
+                                                                                                                   ofile_pimy, ofile_pistd, 
                                                                                                                    vv, yrmaxchange)
                                                                                     except TypeError as e:
                                                                                         continue
                                                                                     #Mapping masks and indicators
                                                                                     try:
-                                                                                        [ofile_hiy, ofile_histd] = data_crunch(
+                                                                                        [ofile_hiy, ofile_himy, ofile_histd] = data_crunch(
                                                                                             fhi_dir, 'historical', vv, 
                                                                                             bandwidth, 1850, 2014)
                                                                                     except TypeError:
@@ -658,7 +694,9 @@ for mip in project:
                                                                                                     min_samples=8)
                                                                                     if len(clusters) >= 1:
                                                                                         clusters = np.array(clusters, dtype=int)
-                                                                                        plotting_clusters(path_f, ofile_y, ofile_piy, ofile_hiy, 
+                                                                                        plotting_clusters(path_f, 
+                                                                                                    ofile_y, ofile_piy, ofile_hiy,
+                                                                                                    ofile_my, ofile_pimy, ofile_himy, 
                                                                                                     clusters, time, lon, lat, unit, data, 
                                                                                                     indicators, vv, vee, m, 'std', ss,
                                                                                                     thres_gp)
@@ -671,7 +709,9 @@ for mip in project:
                                                                                                     )
                                                                                     if len(clusters) >= 1:
                                                                                         clusters = np.array(clusters, dtype=int)
-                                                                                        plotting_clusters(path_f, ofile_y, ofile_piy, ofile_hiy,
+                                                                                        plotting_clusters(path_f, 
+                                                                                                    ofile_y, ofile_piy, ofile_hiy,
+                                                                                                    ofile_my, ofile_pimy, ofile_himy,
                                                                                                     clusters, time, lon, lat, unit, 
                                                                                                     data, indicators, vv, vee, m, 
                                                                                                     'maxch', ss, thres_gp)
@@ -684,7 +724,9 @@ for mip in project:
                                                                                                     )
                                                                                     if len(clusters) >= 1:
                                                                                         clusters = np.array(clusters, dtype=int)
-                                                                                        plotting_clusters(path_f, ofile_y, ofile_piy, ofile_hiy, 
+                                                                                        plotting_clusters(path_f, 
+                                                                                                    ofile_y, ofile_piy, ofile_hiy, 
+                                                                                                    ofile_my, ofile_pimy, ofile_himy,
                                                                                                     clusters, time, lon, lat, unit, data, 
                                                                                                     indicators, vv, vee, m, 'pc_99', ss,
                                                                                                     thres_gp)
@@ -696,7 +738,9 @@ for mip in project:
                                                                                                     min_samples=8)
                                                                                     if len(clusters) >= 1:
                                                                                         clusters = np.array(clusters, dtype=int)
-                                                                                        plotting_clusters(path_f, ofile_y, ofile_piy, ofile_hiy, 
+                                                                                        plotting_clusters(path_f, 
+                                                                                                    ofile_y, ofile_piy, ofile_hiy, 
+                                                                                                    ofile_my, ofile_pimy, ofile_himy,
                                                                                                     clusters, time, lon, lat, unit, data, 
                                                                                                     indicators, vv, vee, m, 'combine', ss,
                                                                                                     thres_gp)
