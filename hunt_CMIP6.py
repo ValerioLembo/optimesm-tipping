@@ -51,7 +51,7 @@ in_year = 2010          # Initial year for historical/ssp simulations
 end_year = 2300         # Last year for ssp simulations
 pc = [1, 5, 10, 25,     # set of percentiles for tail comparisons
       75, 90, 95, 99]
-thres_gp = 100          # Minimal area (in gridpoints 1x1) for cluster retrieval
+thres_gp = 150           # Minimal area (in gridpoints 1x1) for cluster retrieval
 
 # Defining input/output paths, scenarios, variables and models to be analysed
 path = '/work_big/datasets/synda/data/CMIP6/'
@@ -67,42 +67,47 @@ scenarios = [
     ]
 runs = ['r1i1p1f1', 'r2i1p1f1']
 model_groups = [
-    # 'AS-RCEC', 'AWI',
-    # 'BCC',
-    # 'CAMS',
-    # 'CCCma', 'CCCR-IITM', 
-    # # 'CMCC', 
-    # 'CSIRO', 
-    # 'CSIRO-ARCCSS', 
-    # 'E3SM-Project', 
-    # 'EC-Earth-Consortium', 
-    # 'FIO-QLNM',
-    # 'HAMMOZ-Consortium', 
-    # 'INM', 
-    # 'IPSL', 
-    # 'KIOST', 'MIROC', 'MOHC', 
-    # 'MPI-M', 
-    # 'MRI',
-    # 'NASA-GISS', 
-    # 'NCAR', 
-    # 'NCC', 
-    # 'NIMS-KMA',
+    'AS-RCEC', 
+    'AWI',
+    'BCC',
+    'CAMS',
+    'CCCma',
+    'CCCR-IITM', 
+    # 'CMCC', 
+    'CSIRO', 
+    'CSIRO-ARCCSS', 
+    'E3SM-Project', 
+    'EC-Earth-Consortium', 
+    'FIO-QLNM',
+    'HAMMOZ-Consortium', 
+    'INM', 
+    'IPSL', 
+    'KIOST', 'MIROC', 'MOHC', 
+    'MPI-M', 
+    'MRI',
+    'NASA-GISS', 
+    'NCAR', 
+    'NCC', 
+    'NIMS-KMA',
     'NOAA-GFDL', 
     'NUIST', 
     'SNU',
     'THU'
     ]
 vars = [
-        # {'SImon':[]},
-        {'SImon':['siconc']},
-        {'Amon':['tas','pr']},
-        # {'Omon':[]}]
-        {'Omon':['sos','tos']}]
-domains = ['SImon', 'Amon', 'Omon']
+        # {'Lmon':[]},
+        {'Lmon':['mrro', 'mrso']},
+        {'SImon':[]},
+        # {'SImon':['siconc']},
+        {'Amon':[]},
+        # {'Amon':['psl','tas','pr']},
+        {'Omon':['sos']}]
+        # {'Omon':['sos','tos']}]
+domains = ['Lmon', 'SImon', 'Amon', 'Omon']
 
 def data_crunch(f_dir,scen,var,filter,in_year,end_year):
     os.chdir(f_dir)
-    tmp_dir = '/tmp/tmp_{}_{}'.format(scen,date)
+    tmp_dir = '/work_big/users/lembo/tmp/tmp_{}_{}'.format(scen,date)
     try:
         os.makedirs(tmp_dir)
     except OSError:
@@ -190,7 +195,7 @@ def data_crunch(f_dir,scen,var,filter,in_year,end_year):
     try:
         os.remove(ofile)
     except OSError:
-        pass    
+        pass 
     return ofile_y, ofile_my, ofile_std
 
 
@@ -686,50 +691,50 @@ for mip in project:
                                                                                     map(path_f, lon, lat,
                                                                                         masks[5], vv, vee, m, 
                                                                                         ss, 'mask_mmod')
-                                                                                    clusters, masks_c = oet.analyze.clustering.build_cluster_mask(
-                                                                                                    np.array(np.bool_(np.squeeze(masks[0]))),
-                                                                                                    latm,
-                                                                                                    lonm,
-                                                                                                    max_distance_km='infer',
-                                                                                                    min_samples=8)
-                                                                                    if len(clusters) >= 1:
-                                                                                        clusters = np.array(clusters, dtype=int)
-                                                                                        plotting_clusters(path_f, 
-                                                                                                    ofile_y, ofile_piy, ofile_hiy,
-                                                                                                    ofile_my, ofile_pimy, ofile_himy, 
-                                                                                                    clusters, time, lon, lat, unit, data, 
-                                                                                                    indicators, vv, vee, m, 'std', ss,
-                                                                                                    thres_gp)
-                                                                                    clusters, masks_c = oet.analyze.clustering.build_cluster_mask(
-                                                                                                    np.array(np.bool_(np.squeeze(masks[1]))),
-                                                                                                    latm,
-                                                                                                    lonm,
-                                                                                                    max_distance_km='infer',
-                                                                                                    min_samples=8,
-                                                                                                    )
-                                                                                    if len(clusters) >= 1:
-                                                                                        clusters = np.array(clusters, dtype=int)
-                                                                                        plotting_clusters(path_f, 
-                                                                                                    ofile_y, ofile_piy, ofile_hiy,
-                                                                                                    ofile_my, ofile_pimy, ofile_himy,
-                                                                                                    clusters, time, lon, lat, unit, 
-                                                                                                    data, indicators, vv, vee, m, 
-                                                                                                    'maxch', ss, thres_gp)
-                                                                                    clusters, masks_c = oet.analyze.clustering.build_cluster_mask(
-                                                                                                    np.array(np.bool_(np.squeeze(masks[2]))),
-                                                                                                    latm,
-                                                                                                    lonm,
-                                                                                                    max_distance_km='infer',
-                                                                                                    min_samples=8,
-                                                                                                    )
-                                                                                    if len(clusters) >= 1:
-                                                                                        clusters = np.array(clusters, dtype=int)
-                                                                                        plotting_clusters(path_f, 
-                                                                                                    ofile_y, ofile_piy, ofile_hiy, 
-                                                                                                    ofile_my, ofile_pimy, ofile_himy,
-                                                                                                    clusters, time, lon, lat, unit, data, 
-                                                                                                    indicators, vv, vee, m, 'pc_99', ss,
-                                                                                                    thres_gp)
+                                                                                    # clusters, masks_c = oet.analyze.clustering.build_cluster_mask(
+                                                                                    #                 np.array(np.bool_(np.squeeze(masks[0]))),
+                                                                                    #                 latm,
+                                                                                    #                 lonm,
+                                                                                    #                 max_distance_km='infer',
+                                                                                    #                 min_samples=8)
+                                                                                    # if len(clusters) >= 1:
+                                                                                    #     clusters = np.array(clusters, dtype=int)
+                                                                                    #     plotting_clusters(path_f, 
+                                                                                    #                 ofile_y, ofile_piy, ofile_hiy,
+                                                                                    #                 ofile_my, ofile_pimy, ofile_himy, 
+                                                                                    #                 clusters, time, lon, lat, unit, data, 
+                                                                                    #                 indicators, vv, vee, m, 'std', ss,
+                                                                                    #                 thres_gp)
+                                                                                    # clusters, masks_c = oet.analyze.clustering.build_cluster_mask(
+                                                                                    #                 np.array(np.bool_(np.squeeze(masks[1]))),
+                                                                                    #                 latm,
+                                                                                    #                 lonm,
+                                                                                    #                 max_distance_km='infer',
+                                                                                    #                 min_samples=8,
+                                                                                    #                 )
+                                                                                    # if len(clusters) >= 1:
+                                                                                    #     clusters = np.array(clusters, dtype=int)
+                                                                                    #     plotting_clusters(path_f, 
+                                                                                    #                 ofile_y, ofile_piy, ofile_hiy,
+                                                                                    #                 ofile_my, ofile_pimy, ofile_himy,
+                                                                                    #                 clusters, time, lon, lat, unit, 
+                                                                                    #                 data, indicators, vv, vee, m, 
+                                                                                    #                 'maxch', ss, thres_gp)
+                                                                                    # clusters, masks_c = oet.analyze.clustering.build_cluster_mask(
+                                                                                    #                 np.array(np.bool_(np.squeeze(masks[2]))),
+                                                                                    #                 latm,
+                                                                                    #                 lonm,
+                                                                                    #                 max_distance_km='infer',
+                                                                                    #                 min_samples=8,
+                                                                                    #                 )
+                                                                                    # if len(clusters) >= 1:
+                                                                                    #     clusters = np.array(clusters, dtype=int)
+                                                                                    #     plotting_clusters(path_f, 
+                                                                                    #                 ofile_y, ofile_piy, ofile_hiy, 
+                                                                                    #                 ofile_my, ofile_pimy, ofile_himy,
+                                                                                    #                 clusters, time, lon, lat, unit, data, 
+                                                                                    #                 indicators, vv, vee, m, 'pc_99', ss,
+                                                                                    #                 thres_gp)
                                                                                     clusters, masks_c = oet.analyze.clustering.build_cluster_mask(
                                                                                                     np.array(np.bool_(np.squeeze(masks[3]))),
                                                                                                     latm,
