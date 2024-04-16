@@ -1,6 +1,0 @@
-Error in calling operator setmisstoc with:
->>> /work/users/lembo/miniconda3/bin/cdo -O -s -P 8 -setmisstoc,0 -selyear,2015/2100 -runmean,10 -selvar,sos -remapbil,r360x180 -yearmean /work_big/datasets/synda/data/CMIP6/ScenarioMIP/AWI/AWI-CM-1-1-MR/ssp585/r1i1p1f1/Omon/sos/gn/v20181218/file_merged.nc /work_big/datasets/synda/data/CMIP6/ScenarioMIP/AWI/AWI-CM-1-1-MR/ssp585/r1i1p1f1/Omon/sos/gn/v20181218/file_merged_y.nc<<<
-STDOUT:
-STDERR:
-cdo(4) remapbil (Abort): Bilinear/bicubic interpolation doesn't support unstructured source grids!
-
