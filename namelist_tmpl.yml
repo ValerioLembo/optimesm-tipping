@@ -1,0 +1,12 @@
+analysis: 
+  project: "{{ scenario }}"
+  modelg: "{{ mgroup }}"
+  dataset: "{{ model }}"
+  experiment: "{{ experiment }}"
+  ensemble: "{{ run }}"
+  frequency: "{{ freq }}"
+  grid: "{{ grid }}"
+  version: "{{ vers }}"
+  year1: "{{ inyear }}"
+  year2: "{{ outyear }}"
+  season: DJFM
