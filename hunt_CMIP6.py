@@ -66,43 +66,12 @@ scenarios = [
     {'ScenarioMIP': ['ssp585', 'ssp370', 'ssp245', 'ssp126']}
     ]
 runs = ['r1i1p1f1', 'r2i1p1f1']
-model_groups = [
-    'AS-RCEC', 
-    'AWI',
-    'BCC',
-    'CAMS',
-    'CCCma',
-    'CCCR-IITM', 
-    # 'CMCC', 
-    'CSIRO', 
-    'CSIRO-ARCCSS', 
-    'E3SM-Project', 
-    'EC-Earth-Consortium', 
-    'FIO-QLNM',
-    'HAMMOZ-Consortium', 
-    'INM', 
-    'IPSL', 
-    'KIOST', 'MIROC', 'MOHC', 
-    'MPI-M', 
-    'MRI',
-    'NASA-GISS', 
-    'NCAR', 
-    'NCC', 
-    'NIMS-KMA',
-    'NOAA-GFDL', 
-    'NUIST', 
-    'SNU',
-    'THU'
-    ]
+model_groups = ['AS-RCEC',  'AWI', 'BCC', 'CAMS', 'CCCma', 'CCCR-IITM', 'CSIRO',  'CSIRO-ARCCSS',  'E3SM-Project', 'EC-Earth-Consortium',  'FIO-QLNM', 'HAMMOZ-Consortium',  'INM',  'IPSL',  'KIOST', 'MIROC', 'MOHC',  'MPI-M',  'MRI', 'NASA-GISS', 'NCAR', 'NCC', 'NIMS-KMA', 'NOAA-GFDL', 'NUIST',  'SNU', 'THU']
 vars = [
-        # {'Lmon':[]},
         {'Lmon':['mrro', 'mrso']},
-        {'SImon':[]},
-        # {'SImon':['siconc']},
-        {'Amon':[]},
-        # {'Amon':['psl','tas','pr']},
-        {'Omon':['sos']}]
-        # {'Omon':['sos','tos']}]
+        {'SImon':['siconc']},
+        {'Amon':['psl','tas','pr']},
+        {'Omon':['sos', 'tos']}]
 domains = ['Lmon', 'SImon', 'Amon', 'Omon']
 
 def data_crunch(f_dir,scen,var,filter,in_year,end_year):
