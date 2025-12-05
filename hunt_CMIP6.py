@@ -13,6 +13,7 @@ Versions:
 24/01/24: Printing out the time series to Netcdf
 25/01/24: Appending historical time series to ssp scenarios
 18/03/24: Now saves time series as raw yearly time series
+04/12/25: Updated some methods and display styles
 """
 
 from cdo import Cdo
@@ -20,7 +21,9 @@ from math import floor
 Cdo.debug = True
 from netCDF4 import Dataset as ds
 import diptest
-import optim_esm_tools as oet
+import optim_esm_tools.optim_esm_tools as oet
+print(oet.__file__)
+print(hasattr(oet, "analyze"))
 from scipy import stats
 # import rpy_symmetry as rsym
 import datetime
@@ -30,7 +33,9 @@ import shutil
 import glob
 import numpy as np
 import matplotlib.pyplot as plt
-from mpl_toolkits.basemap import Basemap
+import cartopy.crs as ccrs
+import cartopy.feature as cfeature
+# from mpl_toolkits.basemap import Basemap
 
 #Introductory section. 
 cdo = Cdo()
@@ -38,7 +43,7 @@ now = datetime.datetime.now()
 date = now.isoformat()
 logfilen = 'log_hunt_{}.log'.format(date)
 logging.basicConfig(filename=logfilen, level=logging.INFO)
-logger = logging.getLogger(__file__)
+logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 ## User's options
@@ -52,9 +57,11 @@ end_year = 2300         # Last year for ssp simulations
 pc = [1, 5, 10, 25,     # set of percentiles for tail comparisons
       75, 90, 95, 99]
 thres_gp = 150           # Minimal area (in gridpoints 1x1) for cluster retrieval
+plev= 50000
 
 # Defining input/output paths, scenarios, variables and models to be analysed
-path = '/work_big/datasets/synda/data/CMIP6/'
+path = '/work/datasets/synda/data/CMIP6/'
+tmp_path = '/work/users/clima/lembo/tmp/'
 path_l = '/home/lembo/tipping_optimesm/figures_{}'.format(date)
 try:
     os.makedirs(path_l)
@@ -62,10 +69,11 @@ except OSError:
     pass
 project = ['CMIP', 'ScenarioMIP']
 scenarios = [
-    {'CMIP':[]},
-    {'ScenarioMIP': ['ssp585', 'ssp370', 'ssp245', 'ssp126']}
+    {'CMIP':['historical']},
+    {'ScenarioMIP': ['ssp585','ssp370', 'ssp245', 'ssp126']}
+    # {'ScenarioMIP': ['ssp585']}
     ]
-runs = ['r1i1p1f1', 'r2i1p1f1']
+runs = ['r1i1p1f1']
 model_groups = [
     'AS-RCEC', 
     'AWI',
@@ -83,7 +91,7 @@ model_groups = [
     'INM', 
     'IPSL', 
     'KIOST', 'MIROC', 'MOHC', 
-    'MPI-M', 
+    #'MPI-M', 
     'MRI',
     'NASA-GISS', 
     'NCAR', 
@@ -95,19 +103,20 @@ model_groups = [
     'THU'
     ]
 vars = [
-        # {'Lmon':[]},
+        # {'day':['va']},
         {'Lmon':['mrro', 'mrso']},
-        {'SImon':[]},
-        # {'SImon':['siconc']},
-        {'Amon':[]},
-        # {'Amon':['psl','tas','pr']},
-        {'Omon':['sos']}]
-        # {'Omon':['sos','tos']}]
+        {'SImon':['siconc']},
+        {'Amon':['tas','pr']},
+        {'Omon':['sos','tos']}]
+        # {'Lmon':[]},
+        # {'SImon':[]},
+        # {'Amon':[]},
+        # {'Omon':[]}]
 domains = ['Lmon', 'SImon', 'Amon', 'Omon']
 
 def data_crunch(f_dir,scen,var,filter,in_year,end_year):
     os.chdir(f_dir)
-    tmp_dir = '/work_big/users/lembo/tmp/tmp_{}_{}'.format(scen,date)
+    tmp_dir = '{}tmp_{}_{}'.format(tmp_path,scen,date)
     try:
         os.makedirs(tmp_dir)
     except OSError:
@@ -139,7 +148,7 @@ def data_crunch(f_dir,scen,var,filter,in_year,end_year):
     nyrs = cdo.nyear(input=ofile)[0]
     logger.info("Num. of years: {}".format(nyrs))
     print(nyrs)
-    if int(nyrs)<10:
+    if int(nyrs)<yrmaxchange:
         logger.info('Not enough years')
         return
     else:
@@ -154,6 +163,15 @@ def data_crunch(f_dir,scen,var,filter,in_year,end_year):
                 input= '-selyear,{}/{} -selvar,{} -remapbil,r360x180 -yearmean {}'.format(in_year,end_year,var,ofile),
                 options = '-P 8',
                 output = ofile_y)
+        elif var=='zg' or var=='ta' or var=='ua' or var=='va':
+            cdo.remapbil('r360x180',
+                input= '-selyear,{}/{} -yearmean -sellevel,{} {}'.format(in_year,end_year,plev,ofile),
+                options = '-P 8',
+                output = ofile_y)
+            cdo.runmean(filter,
+                input= ofile_y,
+                options = '-P 8',
+                output = ofile_my)
         else:
             cdo.runmean(filter,
                 input= '-selyear,{}/{} -remapbil,r360x180 -yearmean {}'.format(in_year,end_year,ofile),
@@ -172,6 +190,15 @@ def data_crunch(f_dir,scen,var,filter,in_year,end_year):
                 output = ofile_my)
             cdo.setmisstoc(0,
                 input = '-selvar,{} -remapbil,r360x180 -yearmean {}'.format(var,ofile),
+                options = '-P 8',
+                output = ofile_y)
+        elif var=='zg' or var=='ta' or var=='ua' or var=='va':
+            cdo.runmean(filter,
+                input= '-remapbil,r360x180 -yearmean -sellevel,{} {}'.format(plev,ofile),
+                options = '-P 8',
+                output = ofile_my)
+            cdo.remapbil('r360x180',
+                input= '-yearmean -sellevel,{} {}'.format(plev,ofile),
                 options = '-P 8',
                 output = ofile_y)
         else:
@@ -229,7 +256,7 @@ def tips(filein,filein_std,filein_pi,filein_pistd,varname,yrmxch):
     data = ds(filein)
     var = data.variables[varname]
     unit = var.units 
-    var = data.variables[varname][:,:,:]
+    var = np.squeeze(data.variables[varname])
     lat = data.variables['lat'][:]
     lon = data.variables['lon'][:]
     time = data.variables['time'][:]
@@ -240,14 +267,14 @@ def tips(filein,filein_std,filein_pi,filein_pistd,varname,yrmxch):
         return
     fin = nyrs - yrmxch
     data = ds(filein_std)
-    var_std = data.variables[varname][:,:,:]  
+    var_std = np.squeeze(data.variables[varname])
     data = ds(filein_pi)
     time_pi = data.variables['time'][:]
     nyrs_pi = len(time_pi)
     finpi = nyrs_pi - yrmxch
-    varpi = data.variables[varname][:,:,:]
+    varpi = np.squeeze(data.variables[varname])
     data = ds(filein_pistd)
-    varpi_std = data.variables[varname][:,:,:]
+    varpi_std = np.squeeze(data.variables[varname][:,:,:])
     pcm_std = np.percentile(varpi_std, pc)
     var_shift = np.zeros(np.shape(var))
     var_shift[yrmxch:,:,:] = var[:fin,:,:]
@@ -340,6 +367,7 @@ def tips(filein,filein_std,filein_pi,filein_pistd,varname,yrmxch):
 
 def plotting_clusters(path, file_in, file_pin, file_hin, file_min, file_mpin, file_mhin, clusters, time, lon, lat, unit, data, ind, 
                       vv, vee, mod, method, scen, thres):
+    clusters = np.swapaxes(clusters, 1, 2)
     for cl in range(len(clusters[:,0,0])):
         cl_tser = clusters[cl,:,:]
         if np.nansum(cl_tser)>thres:
@@ -372,22 +400,28 @@ def plotting_clusters(path, file_in, file_pin, file_hin, file_min, file_mpin, fi
             
             [dipt,pd] = diptest.diptest(tser) 
             [stat, ps] = stats.kstest(tser-np.nanmean(tser), 'norm')
-            plt.figure(figsize=(12, 8))  # Set the figure size
-            ax1 = plt.subplot(2,2,1)
+            fig, axes = plt.subplots(2, 2, figsize=(12, 8))
+            # plt.figure(figsize=(12, 8))  # Set the figure size
+            ax1 = axes[0, 0]
+            # ax1 = plt.subplot(2,2,1)
             map_inlet(ax1, lon, lat, np.squeeze(clusters[cl,:,:]))
-            ax2 = plt.subplot(2,2,2)
-            plot_tser_inlet(yrs_all, tser_all, vv)
-            ax3 = plt.subplot(2,2,3)
-            plot_tser_inlet(yrs, tstd, 'std')
-            ax4 = plt.subplot(2,2,4)
-            tab = plt.table(cellText = [['St. dev.','Max. Jump'],
+            ax1.axis('off')
+            ax2 = axes[0, 1]
+            # ax2 = plt.subplot(2,2,2)
+            plot_tser_inlet(ax2, yrs_all, tser_all, vv)
+            ax3 = axes[1, 0]
+            # ax3 = plt.subplot(2,2,3)
+            plot_tser_inlet(ax3, yrs, tstd, 'std')
+            ax4 = axes[1, 1]
+            # ax4 = plt.subplot(2,2,4)
+            tab = ax4.table(cellText = [['St. dev.','Max. Jump'],
                                         [str(std_m), str(mjump_m)],
                                         ['Dip pval', 'KS pval'],
                                         [str(pd), str(ps)]],
                             # colLabels = [],
                             loc='center')
-            plt.axis('off')
-            plt.suptitle(vv + " " + mod + " " + vee + " " + scen + " " + method)
+            ax4.axis('off')
+            fig.suptitle(vv + " " + mod + " " + vee + " " + scen + " " + method + "Cluster " + str(cl))
             file_f = path + "/" + vv + "_" + mod + "_" + vee + "_" + scen + "_cl_" + method + "_" + str(cl) + ".png"
             plt.savefig(file_f)
             plt.close()
@@ -511,50 +545,61 @@ def plot_tser(path, time, var, vname, ver, model, scen, name):
     plt.savefig(path + "/" + model + "/" + vname + "_" + model + "_" + ver + "_" + scen + "_" + name + "_tser.png")
     plt.close()
     
-def plot_tser_inlet(time, var, vname):
+def plot_tser_inlet(ax, time, var, vname):
     # Plotting
     # plt.figure(figsize=(10, 6))  # Set the figure size
-    plt.plot(time, var, color='blue', linewidth=1)
-    plt.xlabel('Years')  # Set the x-axis label
-    plt.ylabel(vname)  # Set the y-axis label
-    plt.grid(True)  # Enable gridlines
+    ax.plot(time, var, color='blue', linewidth=1)
+    ax.set_xlabel('Years')  # Set the x-axis label
+    ax.set_ylabel(vname)  # Set the y-axis label
+    ax.grid(True)  # Enable gridlines
     # plt.tight_layout()  # Adjust the spacing of the plot
 
 def map(path, lons, lats, data, var, ver, model, scen, mode):
-    m = Basemap(projection='cyl', resolution='c', lon_0=180.)
-    lons[lons > 180.] -= 360.
-    lons_2 = lons[lons>=0]
-    lons_3 = np.append(lons[lons<0], lons_2, 0)
-    lons = lons_3 + 180.
+    ax = plt.subplot(111, projection=ccrs.PlateCarree(central_longitude=0))
     # draw map features
-    m.drawcoastlines()
-    m.drawcountries()
-    m.fillcontinents(color='coral', lake_color='aqua')
+    ax.coastlines(resolution='110m')
+    # m.drawcoastlines()
+    # m.drawcountries()
+    ax.add_feature(cfeature.BORDERS, linewidth=1)
+    # Fill continents with color (equivalent to m.fillcontinents(color='coral'))
+    ax.add_feature(cfeature.LAND, facecolor='coral')
+    # Fill ocean/lakes with color (equivalent to lake_color='aqua')
+    ax.add_feature(cfeature.OCEAN, facecolor='aqua')
+    # m.fillcontinents(color='coral', lake_color='aqua')
     # plot data on the map
     vmax = np.nanmax(np.abs(data))
     vmin = 0.
-    m.pcolormesh(lons, lats, np.squeeze(data), cmap='Reds', vmin = vmin, vmax = vmax)
+    ax.pcolormesh(lons, lats, np.squeeze(data), cmap='Reds', vmin = vmin, vmax = vmax)
+    # m.pcolormesh(lons, lats, np.squeeze(data), cmap='Reds', vmin = vmin, vmax = vmax)
     # add title
     plt.title(var + " " + model + " " + ver + " " + scen + "\n " + mode)
-    plt.colorbar()
+    # plt.colorbar()
     # show and save the map
     plt.savefig(path + "/" + var + "_" + model + "_" + ver + "_" + scen + "_" + mode + ".png")
     plt.close()
     
 def map_inlet(ax, lons, lats, data):
-    m = Basemap(projection='cyl', resolution='c', lon_0=180., ax=ax)
-    lons[lons > 180.] -= 360.
-    lons_2 = lons[lons>=0]
-    lons_3 = np.append(lons[lons<0], lons_2, 0)
-    lons = lons_3 + 180.
+    # ax = plt.subplot(111, projection=ccrs.PlateCarree(central_longitude=0))
+    ax = plt.axes(projection=ccrs.PlateCarree(central_longitude=0),position=ax.get_position())
+    # ax = ccrs.PlateCarree(central_longitude=180)
+    # m = Basemap(projection='cyl', resolution='c', lon_0=180., ax=ax)
     # draw map features
-    m.drawcoastlines()
-    m.drawcountries()
-    m.fillcontinents(color='coral', lake_color='aqua')
+    # draw map features
+    ax.coastlines(resolution='110m')
+    # m.drawcoastlines()
+    # m.drawcountries()
+    # Add country borders (equivalent to m.drawcountries())
+    ax.add_feature(cfeature.BORDERS, linewidth=1)
+    # Fill continents with color (equivalent to m.fillcontinents(color='coral'))
+    ax.add_feature(cfeature.LAND, facecolor='coral')
+    # Fill ocean/lakes with color (equivalent to lake_color='aqua')
+    ax.add_feature(cfeature.OCEAN, facecolor='aqua')
+    # m.fillcontinents(color='coral', lake_color='aqua')
     # plot data on the map
     vmax = np.nanmax(np.abs(data))
     vmin = 0.
-    m.pcolormesh(lons, lats, np.squeeze(data), cmap='Reds', vmin = vmin, vmax = vmax)
+    ax.pcolormesh(lons, lats, np.squeeze(data), cmap='Reds', vmin = vmin, vmax = vmax)
+    # m.pcolormesh(lons, lats, np.squeeze(data), cmap='Reds', vmin = vmin, vmax = vmax)
     # plt.colorbar(cax=ax)
 
 
@@ -620,11 +665,14 @@ for mip in project:
                                                                     if 'piControl' in os.listdir(os.path.join(cmg_dir, m)):
                                                                         # logger.info("The piControl is present...")
                                                                         pi_dir = os.path.join(cmg_dir, m, 'piControl', rr)
-                                                                        hi_dir = os.path.join(cmg_dir, m, 'historical', rr) 
-                                                                        piv_dir = os.path.join(pi_dir, dom, vv, gg)
+                                                                        hi_dir = os.path.join(cmg_dir, m, 'historical', rr)
+                                                                        piv_dir = os.path.join(pi_dir, dom, vv, gg) 
+                                                                        if not os.path.isdir(piv_dir):
+                                                                            piv_dir = os.path.join(pi_dir, 'Amon', vv, gg)
                                                                         hiv_dir = os.path.join(hi_dir, dom, vv, gg)
                                                                         if os.path.isdir(piv_dir) and os.listdir(piv_dir) and os.path.isdir(hiv_dir) and os.listdir(hiv_dir):   
-                                                                            if dom in os.listdir(pi_dir) and dom in os.listdir(hi_dir):
+                                                                            # if dom in os.listdir(pi_dir) and dom in os.listdir(hi_dir):
+                                                                            if dom in os.listdir(hi_dir):
                                                                                 vers = [v for v in os.listdir(piv_dir)]
                                                                                 vep = vers[0]
                                                                                 fpi_dir = os.path.join(piv_dir, vep)
@@ -633,9 +681,11 @@ for mip in project:
                                                                                 fhi_dir = os.path.join(hiv_dir, veh)
                                                                                 if os.path.isdir(fpi_dir) and os.listdir(fpi_dir):
                                                                                     try:
+                                                                                        logger.info('Now crunching piControl data (good luck!)...')
                                                                                         [ofile_piy, ofile_pimy, ofile_pistd] = data_crunch(
                                                                                             fpi_dir, 'piControl', vv, 
                                                                                             bandwidth, in_year, end_year)
+                                                                                        logger.info('piControl data crunched!')
                                                                                     except TypeError:
                                                                                         continue
                                                                                     #Computing tipping indicators
@@ -743,6 +793,7 @@ for mip in project:
                                                                                                     min_samples=8)
                                                                                     if len(clusters) >= 1:
                                                                                         clusters = np.array(clusters, dtype=int)
+                                                                                        logger.info('Cluster size: {}'.format(np.shape(clusters)))
                                                                                         plotting_clusters(path_f, 
                                                                                                     ofile_y, ofile_piy, ofile_hiy, 
                                                                                                     ofile_my, ofile_pimy, ofile_himy,
