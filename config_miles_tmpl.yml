@@ -1,0 +1,22 @@
+# 'dirs' is used to setup the working directories
+# - miles: where the code is
+# - output: where to store the output netcdf
+# - figures: where to store the figure (not used)
+
+dirs:
+  miles: '/home/lembo/tipping-optimesm/optimesm-tipping/MiLES2'
+  output: '/work_big/users/clima/lembo/miles_telindices'
+  figures: '/home/lembo/tipping_optimesm/figures_telindices'
+
+# 'data' handles the directory tree to allow miles to look for the data
+# It uses variable replacement: variables that can be used are:
+# ${project}, ${dataset}, ${frequency}, ${variable}, ${experiment}, ${ensemble}
+
+data:
+  CMIP6: '/work_big/datasets/synda/data/CMIP6/{{ analysis.project }}/{{ analysis.modelg }}/{{ analysis.dataset }}/{{ analysis.experiment }}/{{ analysis.ensemble }}/{{ analysis.frequency }}/zg/{{ analysis.grid }}/{{ analysis.version }}'
+
+# 'performance' set up parallel computation with dask. use with caution.
+performance: 
+  dask: False
+  threads: 2
+  workers: 2
