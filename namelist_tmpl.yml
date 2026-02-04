@@ -5,6 +5,7 @@ analysis:
   experiment: "{{ experiment }}"
   ensemble: "{{ run }}"
   frequency: "{{ freq }}"
+  variable: "{{ var }}"
   grid: "{{ grid }}"
   version: "{{ vers }}"
   year1: "{{ inyear }}"

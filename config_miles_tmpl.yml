@@ -13,7 +13,7 @@ dirs:
 # ${project}, ${dataset}, ${frequency}, ${variable}, ${experiment}, ${ensemble}
 
 data:
-  CMIP6: '/work_big/datasets/synda/data/CMIP6/{{ analysis.project }}/{{ analysis.modelg }}/{{ analysis.dataset }}/{{ analysis.experiment }}/{{ analysis.ensemble }}/{{ analysis.frequency }}/zg/{{ analysis.grid }}/{{ analysis.version }}'
+  CMIP6: '/work_big/datasets/synda/data/CMIP6/{{ analysis.project }}/{{ analysis.modelg }}/{{ analysis.dataset }}/{{ analysis.experiment }}/{{ analysis.ensemble }}/{{ analysis.frequency }}/{{ analysis.variable }}/{{ analysis.grid }}/{{ analysis.version }}'
 
 # 'performance' set up parallel computation with dask. use with caution.
 performance: 

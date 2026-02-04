@@ -1,4 +1,3 @@
-#!/bin/bash
 """
 WP5 in OptimESM: an algorithm for the detection of tipping elements in CMIP6 model runs
 
@@ -15,7 +14,7 @@ from math import floor
 Cdo.debug = True
 from netCDF4 import Dataset as ds
 import diptest
-import optim_esm_tools as oet
+import optim_esm_tools.optim_esm_tools as oet
 from scipy import stats
 import xarray as xr
 import yaml
@@ -74,8 +73,8 @@ thres_gp = 150           # Minimal area (in gridpoints 1x1) for cluster retrieva
 plev= 50000
 
 # Defining input/output paths, scenarios, variables and models to be analysed
-base_path = Path('/work_big/datasets/synda/data/CMIP6/')
-tmp_path = Path('/work_big/users/clima/lembo/tmp/')
+base_path = Path('/work/datasets/synda/data/CMIP6/')
+tmp_path = Path('/work/users/clima/lembo/tmp/')
 figures_path = Path('/home/lembo/tipping_optimesm/figures_{}'.format(date))
 try:
     os.makedirs(figures_path)
@@ -85,28 +84,58 @@ except OSError:
 projects = ['CMIP', 'ScenarioMIP']
 scenarios = [
     {'CMIP':[]},
-    # {'ScenarioMIP': ['ssp585', 'ssp370', 'ssp245', 'ssp126']}
-    {'ScenarioMIP': ['ssp585']}
+    {'ScenarioMIP': ['ssp370', 'ssp245', 'ssp126']}
+    # {'ScenarioMIP': ['ssp585']}
     ]
 runs = ['r1i1p1f1']
+# model_groups = [
+#     'BCC',
+#     'CCCma',
+#     'IPSL', 
+#     'MPI-M', 
+#     'MRI',
+#     'NOAA-GFDL'
+#     ]
 model_groups = [
-    # 'BCC',
-    # 'CCCma',
-    # 'IPSL', 
-    # 'MPI-M', 
+    'AS-RCEC', 
+    'AWI',
+    'BCC',
+    'CAMS',
+    'CCCma',
+    'CCCR-IITM', 
+    # # 'CMCC', 
+    'CSIRO', 
+    'CSIRO-ARCCSS', 
+    'E3SM-Project', 
+    'EC-Earth-Consortium', 
+    'FIO-QLNM',
+    'HAMMOZ-Consortium', 
+    'INM', 
+    'IPSL', 
+    'KIOST',
+    'MIROC',
+    'MOHC', 
+    'MPI-M', 
     'MRI',
-    # 'NOAA-GFDL'
-    ]
+    'NASA-GISS', 
+    'NCAR', 
+    'NCC', 
+    'NIMS-KMA',
+    'NOAA-GFDL', 
+    'NUIST', 
+    'SNU',
+    'THU']
 vars = [
-        {'day':['psl', 'zg']},
-        # {'Lmon':['mrro', 'mrso']},
-        # {'SImon':['siconc']},
+        {'day':[]},
+        # {'day':['psl','zg']},
+        {'Lmon':['mrro', 'mrso']},
+        {'SImon':['siconc']},
+        {'Amon':['tas']},
+        {'Omon':['tos','sos']}]
+        # {'Lmon':[]},
+        # {'SImon':[]},
         # {'Amon':[]},
-        # {'Omon':['sos']},
-        {'Lmon':[]},
-        {'SImon':[]},
-        {'Amon':[]},
-        {'Omon':[]}]
+        # {'Omon':[]}]
 domains = ['day', 'Lmon', 'SImon', 'Amon', 'Omon']
 
 #setup dask
@@ -151,7 +180,6 @@ def selyear_pi(data, vname, path):
 
 # Process piControl and historical separately
 def process_pi_control(data_context, vname):
-
     data_pic = data_context.copy()
     data_pic.update({'scenario': 'CMIP'})
     cmip_dir = base_path / data_pic['scenario']
@@ -204,22 +232,31 @@ def process_pi_control(data_context, vname):
         data_pic.update({'inyear': years1.zfill(4), 'outyear': years2.zfill(4)})
         logger.info("Information for the namelist: %s", data_pic)
         # print(data_pic)
-        block_pi = render_and_process(data_pic)
-        if block_pi is None:
-           return
-            
+        output_filename = render_and_process(data_pic)
+        if vname == 'zg':
+            block_pi = lib_optim.tel_indices(logger, output_filename, figures_path)
+            if block_pi is None:
+                return
+            else:
+                return block_pi       
+        elif vname == 'psl':
+            indices_pi = lib_optim.psl_index(logger, output_filename, figures_path)
+            if indices_pi is None:
+                return
+            else:
+                return indices_pi 
         # Process historical run similarly
         # years = selyear_pi(data_context, vname, hiv_dir)
         # logger.info('Now processing historical data...')
         # data_hist.update({'inyear': years[0], 'outyear': years[1]})
         # logger.info("Information for the namelist: %s", data_hist)
         # block_hi = render_and_process(data_hist)
-        block_hi = 0
-        if block_hi is None:
-            return
-        else:
-            # block = xr.merge([block_pi, block_hi])
-            return block_pi
+        # block_hi = 0
+        # if block_hi is None:
+        #     return
+        # else:
+        #     # block = xr.merge([block_pi, block_hi])
+        #     return block_pi
     else:
         logger.info('The piControl run does not contain the requested variable.')
         return None
@@ -236,7 +273,8 @@ def render_and_process(data, template_file='namelist_tmpl.yml'):
         with open(output_filename, 'w') as f:
             f.write(rendered_yaml)
         logger.info("Rendered file: %s", output_filename)
-        return lib_optim.tel_indices(logger, output_filename, figures_path)
+        # return lib_optim.tel_indices(logger, output_filename, figures_path)
+        return output_filename
         # return None
     except TypeError as err:
         logger.error("TypeError when processing %s: %s", data, err)
@@ -256,43 +294,56 @@ def process_grid(grid_dir: Path, dom, vv, in_year, end_year, data_context):
                     years = selyear_pi(data_context, vv, f_dir)
                     logger.info("Detected years interval: %s", years)
                     logger.info("Input directory: %s", f_dir)
-                    data_context.update({'inyear': years[0], 'outyear': years[1]})
-                    block = render_and_process(data_context, 'namelist_tmpl.yml')
-                    if block is None:
+                    if years is None:
                         continue
                     else:
-                        logger.info("What's in the block xarray dataset: %s", block)
-                        years_all = [ds.year.values for ds in block]
-                        # print(years_all)
-                        tm90_all = [ds.tm90.compute().values for ds in block]
-                        lib_optim.plot_tser(figures_path, years_all[0], tm90_all[0],
-                                            vv, vers_path.name, data_context['model'],
-                                            data_context['experiment'], 'eur')
-                        lib_optim.plot_tser(figures_path, years_all[1], tm90_all[1],
-                                            vv, vers_path.name, data_context['model'],
-                                            data_context['experiment'], 'pac')
-                    block_pi = process_pi_control(data_context.copy(), vv)
-                    if block_pi is None:
-                        continue
-                    else:
-                        logger.info("What's in the blockpi xarray dataset: %s", block_pi)
-                        years_all_pi = [ds.year.values for ds in block_pi]
-                        # print(years_all_pi)
-                        tm90_all_pi = [ds.tm90.compute().values for ds in block_pi]
-                        lib_optim.plot_tser(figures_path, years_all_pi[0],
-                                            tm90_all_pi[0], vv, vers_path.name,
-                                            data_context['model'], 'piC', 'eur')
-                        lib_optim.plot_tser(figures_path, years_all_pi[1],
-                                            tm90_all_pi[1], vv, vers_path.name,
-                                            data_context['model'], 'piC', 'pac')
-                        # Compute tipping indicators
-                        # block_pi = 0.
-                        try:
-                            indicators_eur, indicators_pac = lib_optim.tips(logger, block, block_pi, vv, yrmaxchange, pc)
-                        except TypeError as e:
-                            logger.error("Error computing tipping: %s", e)
-                            return
-                    yield block, block_pi, vv  # yield block for further processing (e.g., piControl handling)
+                        data_context.update({'inyear': years[0], 'outyear': years[1]})
+                        if vv == 'zg':
+                            output_filename = render_and_process(data_context, 'namelist_tmpl.yml')
+                            block = lib_optim.tel_indices(logger, output_filename, figures_path)
+                            if block is None:
+                                continue
+                            else:
+                                logger.info("What's in the block xarray dataset: %s", block)
+                                years_all = [ds.year.values for ds in block]
+                                # print(years_all)
+                                tm90_all = [ds.tm90.compute().values for ds in block]
+                                lib_optim.plot_tser(figures_path, years_all[0], tm90_all[0],
+                                                    vv, vers_path.name, data_context['model'],
+                                                    data_context['experiment'], 'eur')
+                                lib_optim.plot_tser(figures_path, years_all[1], tm90_all[1],
+                                                    vv, vers_path.name, data_context['model'],
+                                                    data_context['experiment'], 'pac')
+                            block_pi = process_pi_control(data_context.copy(), vv)
+                            if block_pi is None:
+                                continue
+                            else:
+                                logger.info("What's in the blockpi xarray dataset: %s", block_pi)
+                                years_all_pi = [ds.year.values for ds in block_pi]
+                                # print(years_all_pi)
+                                tm90_all_pi = [ds.tm90.compute().values for ds in block_pi]
+                                lib_optim.plot_tser(figures_path, years_all_pi[0],
+                                                    tm90_all_pi[0], vv, vers_path.name,
+                                                    data_context['model'], 'piC', 'eur')
+                                lib_optim.plot_tser(figures_path, years_all_pi[1],
+                                                    tm90_all_pi[1], vv, vers_path.name,
+                                                    data_context['model'], 'piC', 'pac')
+                                # Compute tipping indicators
+                                # block_pi = 0.
+                                try:
+                                    indicators_eur, indicators_pac = lib_optim.tips(logger, block,
+                                                                                    block_pi, vv,
+                                                                                    yrmaxchange, pc)
+                                except TypeError as e:
+                                    logger.error("Error computing tipping: %s", e)
+                                    return
+                            yield block, block_pi, vv  # yield block for further processing (e.g., piControl handling)
+                        elif vv == 'psl':
+                            logger.info('Computing NAO and PNA indices')
+                            output_filename = render_and_process(data_context, 'namelist_tmpl.yml')
+                            indices = lib_optim.psl_index(logger, output_filename, figures_path)
+                            indices_pi = process_pi_control(data_context.copy(), vv)
+                            yield indices, indices_pi, vv  # yield nao and pna for further processing (e.g., piControl handling)
                     
 
 # Process variables for a particular domain folder
@@ -303,6 +354,7 @@ def process_variable(var_dir: Path, domain, var_list, in_year, end_year, base_da
         var_path = var_dir / vv
         if var_path.exists() and list(var_path.iterdir()):
             grids = [g for g in var_path.iterdir() if g.is_dir()]
+            base_data.update({'var': vv})
             for block, block_pi, vv in process_grid(var_path, domain, vv, in_year, end_year, base_data.copy()):
                 # In the outer scope the returned block can then trigger the piControl processing
                 yield block, block_pi, vv
@@ -396,189 +448,3 @@ def process_projects(in_year, end_year, scenarios_list):
 
 # Run the main process with the given time boundaries
 process_projects(in_year, end_year, scenarios)
-
-# mipp=0
-# logger.info('Starting the loops on the files...')
-# for mip in project:
-#     mip_dir = os.path.join(path, mip)
-#     if os.path.isdir(mip_dir) and os.listdir(mip_dir):
-#         logger.info('MIP: {}'.format(mip))
-#         for mg in model_groups:
-#             mg_dir = os.path.join(mip_dir, mg)
-#             if os.path.isdir(mg_dir) and os.listdir(mg_dir):
-#                 logger.info('MODEL GROUP: {}'.format(mg))
-#                 models = [d for d in os.listdir(mg_dir)]
-#                 for m in models:
-#                     logger.info('MODEL: {}'.format(m))
-#                     s_dir = os.path.join(mg_dir, m)
-#                     f_dir = os.path.join(path_l,m)
-#                     try:
-#                         os.makedirs(f_dir)
-#                     except OSError:
-#                         pass
-#                     scens = os.listdir(s_dir)
-#                     logger.info("In MODEL DIR: {}".format(scens))
-#                     # for i in np.arange(len(scenarios[mipp][mip])):
-#                     for ss in scenarios[mipp][mip]:
-#                         # if scenarios[mipp][mip][i] in scens:
-#                         if ss in scens:
-#                             m_dir = os.path.join(s_dir, ss)
-#                             if os.path.isdir(m_dir) and os.listdir(m_dir):
-#                                 logger.info('SCENARIO: {}'.format(ss))
-#                                 run = [r for r in os.listdir(m_dir)]    
-#                                 for rr in runs:
-#                                     if rr in run:
-#                                         logger.info('RUN: {}'.format(rr))
-#                                         j=0
-#                                         for dom in domains:
-#                                             logger.info('DOMAIN: {}'.format(dom))
-#                                             if dom in os.listdir(os.path.join(m_dir, rr)):
-#                                                 v_dir = os.path.join(m_dir, rr, dom)
-#                                                 var = [v for v in os.listdir(v_dir)]
-#                                                 for vv in vars[j][dom]:
-#                                                     logger.info('VAR: {}'.format(vv))
-#                                                     if vv in var:
-#                                                         g_dir = os.path.join(v_dir, vv)
-#                                                         grids = [g for g in os.listdir(g_dir)]
-#                                                         for gg in grids:
-#                                                             logger.info('GRID: {}'.format(gg))
-#                                                             ve_dir = os.path.join(g_dir,gg)
-#                                                             vers = [ve for ve in os.listdir(ve_dir)]
-#                                                             for vee in vers:
-#                                                                 logger.info('VERS: {}'.format(vee))
-#                                                                 f_dir = os.path.join(ve_dir, vee)
-#                                                                 if os.path.isdir(f_dir) and os.listdir(f_dir):
-#                                                                     try:
-#                                                                         data = {
-#                                                                             'scenario': mip,
-#                                                                             'mgroup': mg,
-#                                                                             'model': m,
-#                                                                             'experiment': ss,
-#                                                                             'run': rr,
-#                                                                             'freq': dom,
-#                                                                             'grid': gg,
-#                                                                             'vers': vee,
-#                                                                             'inyear': in_year,
-#                                                                             'outyear': end_year
-#                                                                         }
-#                                                                         env = Environment(loader=FileSystemLoader('./'))
-#                                                                         template = env.get_template('namelist_tmpl.yml')
-#                                                                         rendered_yaml = template.render(data)
-#                                                                         output_filename = f"{data['model']}_namelist.yml"
-#                                                                         with open(output_filename, 'w') as f:
-#                                                                             f.write(rendered_yaml)
-#                                                                         print(output_filename)
-#                                                                         block = lib_optim.tel_indices(output_filename)
-#                                                                     except TypeError:
-#                                                                         continue
-#                                                                     cmip_dir = os.path.join(path, 'CMIP')
-#                                                                     cmg_dir = os.path.join(cmip_dir, mg)
-#                                                                     if 'piControl' in os.listdir(os.path.join(cmg_dir, m)):
-#                                                                         # logger.info("The piControl is present...")
-#                                                                         pi_dir = os.path.join(cmg_dir, m, 'piControl', rr)
-#                                                                         hi_dir = os.path.join(cmg_dir, m, 'historical', rr)
-#                                                                         piv_dir = os.path.join(pi_dir, dom, vv, gg)
-#                                                                         if not os.path.isdir(piv_dir):
-#                                                                             piv_dir = os.path.join(pi_dir, 'Amon', vv, gg)
-#                                                                         hiv_dir = os.path.join(hi_dir, dom, vv, gg)
-#                                                                         if os.path.isdir(piv_dir) and os.listdir(piv_dir) and os.path.isdir(hiv_dir) and os.listdir(hiv_dir):   
-#                                                                             # if dom in os.listdir(pi_dir) and dom in os.listdir(hi_dir):
-#                                                                             if dom in os.listdir(hi_dir):
-#                                                                                 vers = [v for v in os.listdir(piv_dir)]
-#                                                                                 vep = vers[0]
-#                                                                                 fpi_dir = os.path.join(piv_dir, vep)
-#                                                                                 vers = [v for v in os.listdir(hiv_dir)]
-#                                                                                 veh = vers[0]
-#                                                                                 fhi_dir = os.path.join(hiv_dir, veh)
-#                                                                                 if os.path.isdir(fpi_dir) and os.listdir(fpi_dir):
-#                                                                                     try:
-#                                                                                         logger.info('Now crunching piControl data (good luck!)...')
-#                                                                                         data = {
-#                                                                                             'scenario': mip,
-#                                                                                             'mgroup': mg,
-#                                                                                             'model': m,
-#                                                                                             'experiment': ss,
-#                                                                                             'run': rr,
-#                                                                                             'freq': dom,
-#                                                                                             'grid': gg,
-#                                                                                             'vers': vee,
-#                                                                                             'inyear': in_year,
-#                                                                                             'outyear': end_year
-#                                                                                         }
-#                                                                                         env = Environment(loader=FileSystemLoader('./'))
-#                                                                                         template = env.get_template('namelist_tmpl.yml')
-#                                                                                         rendered_yaml = template.render(data)
-#                                                                                         output_filename = f"{data['model']}_namelist.yml"
-#                                                                                         with open(output_filename, 'w') as f:
-#                                                                                             f.write(rendered_yaml)
-#                                                                                         print(output_filename)
-#                                                                                         block_pi = lib_optim.tel_indices(output_filename)
-#                                                                                         logger.info('piControl data crunched!')
-#                                                                                     except TypeError:
-#                                                                                         continue
-#                                                                                     #Computing tipping indicators
-#                                                                                     try:
-#                                                                                         [indicators, masks] = lib_optim.tips(block, block_pi, 
-#                                                                                                                              vv, yrmxch)
-#                                                                                     except TypeError as e:
-#                                                                                         continue
-#                                                                                     try:
-#                                                                                         data = {
-#                                                                                             'scenario': mip,
-#                                                                                             'mgroup': mg,
-#                                                                                             'model': m,
-#                                                                                             'experiment': ss,
-#                                                                                             'run': rr,
-#                                                                                             'freq': dom,
-#                                                                                             'grid': gg,
-#                                                                                             'vers': vee,
-#                                                                                             'inyear': in_year,
-#                                                                                             'outyear': end_year
-#                                                                                         }
-#                                                                                         env = Environment(loader=FileSystemLoader('./'))
-#                                                                                         template = env.get_template('namelist_tmpl.yml')
-#                                                                                         rendered_yaml = template.render(data)
-#                                                                                         output_filename = f"{data['model']}_namelist.yml"
-#                                                                                         with open(output_filename, 'w') as f:
-#                                                                                             f.write(rendered_yaml)
-#                                                                                         print(output_filename)
-#                                                                                         block_hi = lib_optim.tel_indices(output_filename)
-#                                                                                     except TypeError:
-#                                                                                         continue
-#                                                                                     lonm = np.array(lon)
-#                                                                                     latm = np.array(lat)
-#                                                                                     path_f = '{}/{}/{}/{}'.format(path_l, m, ss, vv) 
-#                                                                                     try:
-#                                                                                         os.makedirs(path_f)
-#                                                                                     except OSError:
-#                                                                                       pass
-                                                                                    
-#                                                                                     # os.remove(ofile_piy)
-#                                                                                     # os.remove(ofile_pistd)
-#                                                                                 else:
-#                                                                                     logger.info('Directory is empty...')
-#                                                                         else:
-#                                                                             logger.info('The piControl run does not contain the requested variable.')
-#                                                                     else:
-#                                                                         logger.info('No piControl run found')
-#                                                                     # os.remove(ofile_y)
-#                                                                     # os.remove(ofile_std)
-#                                                                 else:
-#                                                                     logger.info('The directory is empty...')
-#                                                     else:
-#                                                         logger.info("{} variable is not available".format(vv))
-#                                             else:
-#                                                 logger.info('No variable in {} domain'.format(dom))
-#                                             j = j+1
-#                                     else:
-#                                         logger.info("Run {} is not available".format(rr))
-#                             else:
-#                                 logger.info("Theere's nothing in this scenario.")
-#                         else:
-#                             logger.info("Experiment {} is not available".format(ss))
-#             else:
-#                 logger.info("No model is found in {} model group".format(mg))
-#     else:
-#         logger.info("The MIP is empty")
-#     mipp = mipp+1
-# logger.info("Finished hunting for tipping. Now rest...")
